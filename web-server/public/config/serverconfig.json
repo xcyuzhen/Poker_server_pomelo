@@ -1,0 +1,29 @@
+{
+	"dev":{
+		"Server":{
+			"ip":"127.0.0.1",
+			"port":3014,
+			"route":"gate.gateHandler.queryEntry"
+		},
+		"UpdateUrl":"127.0.0.1:3001/update",
+		"HeadUrl":"127.0.0.1:3001/head/"
+	},
+	"test":{
+		"Server":{
+			"ip":"127.0.0.1",
+			"port":3014,
+			"route":"gate.gateHandler.queryEntry"
+		},
+		"UpdateUrl":"127.0.0.1:3001/update",
+		"HeadUrl":"127.0.0.1:3001/head/"
+	},
+	"formal":{
+		"Server":{
+			"ip":"127.0.0.1",
+			"port":3014,
+			"route":"gate.gateHandler.queryEntry"
+		},
+		"UpdateUrl":"127.0.0.1:3001/update",
+		"HeadUrl":"127.0.0.1:3001/head/"
+	}
+}
