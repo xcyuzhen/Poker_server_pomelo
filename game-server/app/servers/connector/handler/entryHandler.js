@@ -61,3 +61,26 @@ var onUserLeave = function(app, session) {
 	}
 	app.rpc.chat.chatRemote.kick(session, session.uid, app.get('serverId'), session.get('rid'), null);
 };
+
+handler.login = function(msg, session, next) {
+	var self = this;
+	var udid = msg.udid
+	var index = udid.slice(-1, udid.length)
+	var uid = 10000 + index
+
+	var sessionService = self.app.get('sessionService');
+
+	//duplicate log in
+	if( !! sessionService.getByUid(uid)) {
+		next(null, {
+			code: 500,
+			error: true
+		});
+		return;
+	}
+
+	session.bind(uid, function () {
+		console.log("AAAAAAAAAA BBBBBBBBBBBBBBB bind callback");
+	});
+	session.on('closed', onUserLeave.bind(null, self.app));
+};
