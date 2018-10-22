@@ -1,3 +1,4 @@
+var pomelo = require('pomelo');
 module.exports = function(app) {
 	return new Handler(app);
 };
@@ -64,23 +65,36 @@ var onUserLeave = function(app, session) {
 
 handler.login = function(msg, session, next) {
 	var self = this;
-	var udid = msg.udid
-	var index = udid.slice(-1, udid.length)
-	var uid = 10000 + index
+	var udid = msg.udid;
 
-	var sessionService = self.app.get('sessionService');
+	console.log("HHHHHHHHHHHHHHHHH handler.login");
 
-	//duplicate log in
-	if( !! sessionService.getByUid(uid)) {
-		next(null, {
-			code: 500,
-			error: true
-		});
-		return;
-	}
+	//根据udid查找玩家账号
+	var sql = "SELECT * FROM user_info;";
+	pomelo.app.get('dbclient').query(sql, [], function(err, res) {
+		if (err) {
+			logger.error('select failed! ' + err.stack);
+		} else {
+			console.log("AAAAAAAAAAAAAA " + res);
+		}
+	})
 
-	session.bind(uid, function () {
-		console.log("AAAAAAAAAA BBBBBBBBBBBBBBB bind callback");
-	});
-	session.on('closed', onUserLeave.bind(null, self.app));
+
+
+
+	// var index = udid.slice(-1, udid.length)
+	// var uid = 10000 + index
+
+	// var sessionService = self.app.get('sessionService');
+
+	// //duplicate log in
+	// if( !! sessionService.getByUid(uid)) {
+	// 	next(null, {
+	// 		code: 500,
+	// 		error: true
+	// 	});
+	// 	return;
+	// }
+	
+	// session.on('closed', onUserLeave.bind(null, self.app));
 };

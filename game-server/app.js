@@ -35,6 +35,12 @@ app.configure('production|development', function() {
 	app.filter(pomelo.timeout());
 });
 
+app.loadConfig("mysql", app.getBase() + "/config/mysql.json"); // 添加配置
+app.configure('production|development', "|user|game", function () {
+    var dbclient = require("./app/dao/sqlPool.js").create(); // 初始化dbclient
+    app.set("dbclient", dbclient);// dbclient 为外部数据库接口，app,get("dbclient") 来使用
+})
+
 // start app
 app.start();
 

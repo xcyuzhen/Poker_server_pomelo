@@ -11,9 +11,10 @@
             {"id":"chat-server-3", "host":"127.0.0.1", "port":6052}
         ],
         "game":[
-            {"id":"game-server-1", "host":"127.0.0.1", "port":7050},
-            {"id":"game-server-2", "host":"127.0.0.1", "port":7051},
-            {"id":"game-server-3", "host":"127.0.0.1", "port":7052}
+            {"id":"game-server-1", "host":"127.0.0.1", "port":7050}
+        ],
+        "user":[
+            {"id":"user-server-1", "host":"127.0.0.1", "port":8050}
         ],
         "gate":[
            {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
@@ -31,9 +32,10 @@
             {"id":"chat-server-3", "host":"127.0.0.1", "port":6052}
         ],
         "game":[
-            {"id":"game-server-1", "host":"127.0.0.1", "port":7050},
-            {"id":"game-server-2", "host":"127.0.0.1", "port":7051},
-            {"id":"game-server-3", "host":"127.0.0.1", "port":7052}
+            {"id":"game-server-1", "host":"127.0.0.1", "port":7050}
+        ],
+        "user":[
+            {"id":"user-server-1", "host":"127.0.0.1", "port":8050}
         ],
         "gate":[
            {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
