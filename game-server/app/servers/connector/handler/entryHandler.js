@@ -1,4 +1,4 @@
-var pomelo = require('pomelo');
+var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 module.exports = function(app) {
 	return new Handler(app);
 };
@@ -65,36 +65,22 @@ var onUserLeave = function(app, session) {
 
 handler.login = function(msg, session, next) {
 	var self = this;
-	var udid = msg.udid;
 
-	console.log("HHHHHHHHHHHHHHHHH handler.login");
-
-	//根据udid查找玩家账号
-	var sql = "SELECT * FROM user_info;";
-	pomelo.app.get('dbclient').query(sql, [], function(err, res) {
+	self.app.rpc.user.userRemote.login(session, msg.udid, function (err, res) {
 		if (err) {
-			logger.error('select failed! ' + err.stack);
+			logger.error('login error ' + err.stack);
 		} else {
-			console.log("AAAAAAAAAAAAAA " + res);
+			//该mid已经登录了，将第一次登录的人踢出
+			var oldSession = sessionService.getByUid(msg.mid)
+			if( !! oldSession) {
+				
+			}
+
+			session.bind(msg.mid);
+			next(null, {
+				code: 200,
+				userData: res
+			});
 		}
-	})
-
-
-
-
-	// var index = udid.slice(-1, udid.length)
-	// var uid = 10000 + index
-
-	// var sessionService = self.app.get('sessionService');
-
-	// //duplicate log in
-	// if( !! sessionService.getByUid(uid)) {
-	// 	next(null, {
-	// 		code: 500,
-	// 		error: true
-	// 	});
-	// 	return;
-	// }
-	
-	// session.on('closed', onUserLeave.bind(null, self.app));
+	});
 };

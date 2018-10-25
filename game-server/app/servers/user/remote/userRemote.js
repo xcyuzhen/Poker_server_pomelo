@@ -1,8 +1,11 @@
+var pomelo = require('pomelo');
+var logger = require('pomelo-logger').getLogger('pomelo', __filename);
+
 module.exports = function(app) {
-	return new GameRemote(app);
+	return new UserRemote(app);
 };
 
-var GameRemote = function(app) {
+var UserRemote = function(app) {
 	this.app = app;
 	this.channelService = app.get('channelService');
 };
@@ -16,7 +19,7 @@ var GameRemote = function(app) {
  * @param {boolean} flag channel parameter
  *
  */
-GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
+UserRemote.prototype.add = function(uid, sid, name, flag, cb) {
 	var channel = this.channelService.getChannel(name, flag);
 	var username = uid.split('*')[0];
 	var param = {
@@ -32,46 +35,55 @@ GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
 	cb(this.get(name, flag));
 };
 
-/**
- * Get user from game channel.
- *
- * @param {Object} opts parameters for request
- * @param {String} name channel name
- * @param {boolean} flag channel parameter
- * @return {Array} users uids in channel
- *
- */
-GameRemote.prototype.get = function(name, flag) {
-	var users = [];
-	var channel = this.channelService.getChannel(name, flag);
-	if( !! channel) {
-		users = channel.getMembers();
-	}
-	for(var i = 0; i < users.length; i++) {
-		users[i] = users[i].split('*')[0];
-	}
-	return users;
-};
 
 /**
- * Kick user out game channel.
+ * User login.
  *
  * @param {String} uid unique id for user
- * @param {String} sid server id
- * @param {String} name channel name
  *
  */
-GameRemote.prototype.kick = function(uid, sid, name, cb) {
-	var channel = this.channelService.getChannel(name, false);
-	// leave channel
-	if( !! channel) {
-		channel.leave(uid, sid);
-	}
-	var username = uid.split('*')[0];
-	var param = {
-		route: 'onLeave',
-		user: username
-	};
-	channel.pushMessage(param);
-	cb();
+UserRemote.prototype.login = function(udid, cb) {
+	//根据udid查找玩家账号
+	var sql = "SELECT * FROM user_info WHERE udid = ? ;";
+	pomelo.app.get('dbclient').query(sql, [udid], function(err, res) {
+		if (err) {
+			cb(err);
+		} else {
+			if (res.length === 0) { 							//没有该玩家，创建玩家
+ 				var newUserInfo = createNewUser(udid);
+ 				cb(err, newUserInfo);
+			} else { 											//找到玩家信息，返回
+				cb(err, res)
+			}
+		}
+	})
+};
+
+var createNewUser = function (udid) {
+	var sql = "INSERT INTO user_info (udid, appid) VALUES (?, ?) ;";
+	pomelo.app.get('dbclient').query(sql, [udid, udid], function(err, res) {
+		if (err) {
+			logger.error('createNewUser error ' + err.stack);
+		} else {
+			//更改默认昵称
+			var mid = res.insertId;
+			var nick = "游客" + mid;
+
+			sql = "UPDATE user_info SET nick = ? WHERE mid = ?";
+			pomelo.app.get('dbclient').query(sql, [nick, mid], function(err, res) {
+				if (err) {
+					logger.error('update nick error ' + err.stack);
+				} else {
+					sql = "SELECT * FROM user_info WHERE mid = ? ;";
+					pomelo.app.get('dbclient').query(sql, [mid], function(err, res) {
+						if (err) {
+							logger.error('get new user error ' + err.stack);
+						} else {
+							return res[0];
+						}
+					})
+				}
+			})
+		}
+	})
 };

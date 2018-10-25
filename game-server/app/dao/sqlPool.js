@@ -9,7 +9,7 @@ mqlMgr.create = function() {
         user: mysqlConfig.user,
         password: mysqlConfig.password,
         database: mysqlConfig.database,
-        // port: mysqlConfig.port
+        port: mysqlConfig.port
     });
     return conn;
 };
