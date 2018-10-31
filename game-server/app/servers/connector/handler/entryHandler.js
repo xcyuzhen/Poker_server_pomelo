@@ -62,25 +62,3 @@ var onUserLeave = function(app, session) {
 	}
 	app.rpc.chat.chatRemote.kick(session, session.uid, app.get('serverId'), session.get('rid'), null);
 };
-
-handler.login = function(msg, session, next) {
-	var self = this;
-
-	self.app.rpc.user.userRemote.login(session, msg.udid, function (err, res) {
-		if (err) {
-			logger.error('login error ' + err.stack);
-		} else {
-			//该mid已经登录了，将第一次登录的人踢出
-			var oldSession = sessionService.getByUid(msg.mid)
-			if( !! oldSession) {
-				
-			}
-
-			session.bind(msg.mid);
-			next(null, {
-				code: 200,
-				userData: res
-			});
-		}
-	});
-};
