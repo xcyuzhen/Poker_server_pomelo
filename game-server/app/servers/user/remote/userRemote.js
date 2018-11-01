@@ -42,19 +42,22 @@ UserRemote.prototype.add = function(uid, sid, name, flag, cb) {
  * @param {String} uid unique id for user
  *
  */
-UserRemote.prototype.login = function(udid, cb) {
+UserRemote.prototype.login = function(udid, sid, cb) {
 	//根据udid查找玩家账号
 	var sql = "SELECT * FROM user_info WHERE udid = ? ;";
 	pomelo.app.get('dbclient').query(sql, [udid], function(err, res) {
 		if (err) {
 			cb(err);
 		} else {
+			var resultUserData = res;
 			if (res.length === 0) { 							//没有该玩家，创建玩家
- 				var newUserInfo = createNewUser(udid);
- 				cb(err, newUserInfo);
-			} else { 											//找到玩家信息，返回
-				cb(err, res)
+ 				resultUserData = createNewUser(udid);
 			}
+
+			//将该玩家添加到大厅channel中
+			
+
+			cb(null, resultUserData);
 		}
 	})
 };

@@ -19,8 +19,6 @@ handler.socketMsg = function(msg, session, next) {
 		self.initSocketCmdConfig();
 	}
 
-	utils._debug(msg)
-
 	var msgSocketCmd = msg.socketCmd;
 	var processerFun = self.socketCmdConfig[msgSocketCmd]
 	if (!! processerFun) {
@@ -39,7 +37,7 @@ handler.socketMsg = function(msg, session, next) {
 var login = function(msg, session, next) {
 	var self = this;
 	var sessionService = self.app.get('sessionService');
-	self.app.rpc.user.userRemote.login(session, msg.udid, function (err, res) {
+	self.app.rpc.user.userRemote.login(session, msg.udid, self.app.get('serverId'), function (err, res) {
 		if (err) {
 			logger.error('login error ' + err.stack);
 		} else {
