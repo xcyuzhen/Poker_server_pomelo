@@ -49,9 +49,11 @@ UserRemote.prototype.login = function(udid, sid, cb) {
 		if (err) {
 			cb(err);
 		} else {
-			var resultUserData = res;
+			var resultUserData;
 			if (res.length === 0) { 							//没有该玩家，创建玩家
  				resultUserData = createNewUser(udid);
+			} else {
+				resultUserData = res[0];
 			}
 
 			//将该玩家添加到大厅channel中
