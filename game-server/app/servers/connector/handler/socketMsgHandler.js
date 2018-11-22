@@ -1,5 +1,6 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var socketCmd = require('../../../models/socketCmd')
+var gameConfig = require('../../../models/gameConfig')
 var utils = require('../../../../util/utils')
 module.exports = function(app) {
 	return new Handler(app);
@@ -50,7 +51,8 @@ var login = function(msg, session, next) {
 			session.bind(msg.mid);
 			next(null, {
 				code: 200,
-				userData: res
+				userData: res,
+				gameList: gameConfig.gameList
 			});
 		}
 	});
@@ -62,6 +64,6 @@ handler.initSocketCmdConfig = function() {
 	var self = this;
 
 	self.socketCmdConfig = {
-		[socketCmd.LOGIN]: login
+		[socketCmd.LOGIN]: login,
 	};
 }
