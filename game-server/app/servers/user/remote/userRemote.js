@@ -67,11 +67,13 @@ UserRemote.prototype.login = function(udid, sid, cb) {
 	}.bind(this))
 };
 
-UserRemote.prototype.userOffLine = function (mid, sid) {
+UserRemote.prototype.userOffLine = function (mid, sid, cb) {
 	var channel = this.channelService.getChannel("Hall", true);
 	channel.leave(mid, sid);
 
 	//修改redis中该用户的在线状态
+
+	cb();
 };
 
 var createNewUser = function (udid) {

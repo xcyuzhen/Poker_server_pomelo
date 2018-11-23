@@ -63,7 +63,7 @@ var login = function(msg, session, next) {
 //请求加入场次
 var enterGroupLevel = function (msg, session, next) {
 	var level = msg.level;
-	
+
 };
 
 //拉取个人信息
@@ -79,7 +79,7 @@ var userOffLine = function (app, session) {
 		return;
 	}
 
-	app.rpc.user.userRemote.userOffLine(session, session.uid, app.get('serverId'));
+	app.rpc.user.userRemote.userOffLine(session, session.uid, app.get('serverId'), null);
 
 	//如果该用户在游戏房间中，通知其他人，该玩家离线
 };
