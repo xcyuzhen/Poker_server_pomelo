@@ -57,11 +57,21 @@ UserRemote.prototype.login = function(udid, sid, cb) {
 			}
 
 			//将该玩家添加到大厅channel中
-			
+			var channel = this.channelService.getChannel("Hall", true);
+			channel.add(resultUserData.mid, sid);
+
+			//将用户常用信息写入redis
 
 			cb(null, resultUserData);
 		}
-	})
+	}.bind(this))
+};
+
+UserRemote.prototype.userOffLine = function (mid, sid) {
+	var channel = this.channelService.getChannel("Hall", true);
+	channel.leave(mid, sid);
+
+	//修改redis中该用户的在线状态
 };
 
 var createNewUser = function (udid) {

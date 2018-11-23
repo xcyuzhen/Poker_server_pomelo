@@ -32,9 +32,10 @@ handler.socketMsg = function(msg, session, next) {
 			msg: "没有找到处理函数"
 		})
 	}
-}
+};
 
 ////////////////////////////处理函数begin////////////////////////////
+//登录
 var login = function(msg, session, next) {
 	var self = this;
 	var sessionService = self.app.get('sessionService');
@@ -48,7 +49,8 @@ var login = function(msg, session, next) {
 				sessionService.kick(msg.mid, "您的账号在其他地方登录");
 			}
 
-			session.bind(msg.mid);
+			session.bind(res.mid);
+			session.on('closed', userOffLine.bind(null, self.app));
 			next(null, {
 				code: 200,
 				userData: res,
@@ -56,14 +58,38 @@ var login = function(msg, session, next) {
 			});
 		}
 	});
-}
+};
+
+//请求加入场次
+var enterGroupLevel = function (msg, session, next) {
+	var level = msg.level;
+	
+};
+
+//拉取个人信息
+var requestUserInfo = function (msg, session, next) {
+
+};
 ////////////////////////////处理函数end////////////////////////////
 
+//用户离线
+var userOffLine = function (app, session) {
+	console.log("BBBBBBBBBBBBBBBBB 用户离线, mid = " + session.uid);
+	if(!session || !session.uid) {
+		return;
+	}
+
+	app.rpc.user.userRemote.userOffLine(session, session.uid, app.get('serverId'));
+
+	//如果该用户在游戏房间中，通知其他人，该玩家离线
+};
 
 handler.initSocketCmdConfig = function() {
 	var self = this;
 
 	self.socketCmdConfig = {
 		[socketCmd.LOGIN]: login,
+		[socketCmd.REQUEST_USER_INFO]: requestUserInfo,
+		[socketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 	};
-}
+};

@@ -1,3 +1,5 @@
 module.exports = {
 	LOGIN: 0x20000,
+	REQUEST_USER_INFO: 0x20001,
+	ENTER_GROUP_LEVEL: 0x20002,
 }
