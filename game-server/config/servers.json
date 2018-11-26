@@ -59,6 +59,18 @@
         "mjGroupFour":[
             {"id":"mjGroupFour-server-1", "host":"127.0.0.1", "port":7053}
         ],
+        "ddzGroupOne":[
+            {"id":"ddzGroupOne-server-1", "host":"127.0.0.1", "port":7150}
+        ],
+        "ddzGroupTwo":[
+            {"id":"ddzGroupTwo-server-1", "host":"127.0.0.1", "port":7151}
+        ],
+        "ddzGroupThree":[
+            {"id":"ddzGroupThree-server-1", "host":"127.0.0.1", "port":7152}
+        ],
+        "ddzGroupFour":[
+            {"id":"ddzGroupFour-server-1", "host":"127.0.0.1", "port":7153}
+        ],
         "user":[
             {"id":"user-server-1", "host":"127.0.0.1", "port":5050}
         ],

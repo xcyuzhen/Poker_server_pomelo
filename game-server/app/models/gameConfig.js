@@ -23,9 +23,13 @@ module.exports = {
     ],
 
     groupServerList: {
-        "11000000": "mjGroupOne",
-        "12000000": "mjGroupTwo",
-        "13000000": "mjGroupThree",
-        "14000000": "mjGroupFour",
+        11000000: "mjGroupOne",
+        12000000: "mjGroupTwo",
+        13000000: "mjGroupThree",
+        14000000: "mjGroupFour",
+        21000000: "ddzGroupOne",
+        22000000: "ddzGroupTwo",
+        23000000: "ddzGroupThree",
+        24000000: "ddzGroupFour",
     },
 }

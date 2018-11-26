@@ -63,7 +63,7 @@ var login = function(msg, session, next) {
 //请求加入场次
 var enterGroupLevel = function (msg, session, next) {
 	var level = msg.level;
-
+	var serverType = eval(gameConfig.groupServerList[level]);
 };
 
 //拉取个人信息
