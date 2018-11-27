@@ -1,5 +1,6 @@
 var pomelo = require('pomelo');
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
+var redis = require('redis');
 
 module.exports = function(app) {
 	return new UserRemote(app);
@@ -11,34 +12,10 @@ var UserRemote = function(app) {
 };
 
 /**
- * Add user into game channel.
- *
- * @param {String} uid unique id for user
- * @param {String} sid server id
- * @param {String} name channel name
- * @param {boolean} flag channel parameter
- *
- */
-UserRemote.prototype.add = function(uid, sid, name, flag, cb) {
-	var channel = this.channelService.getChannel(name, flag);
-	var username = uid.split('*')[0];
-	var param = {
-		route: 'onAdd',
-		user: username
-	};
-	channel.pushMessage(param);
-
-	if( !! channel) {
-		channel.add(uid, sid);
-	}
-
-	cb(this.get(name, flag));
-};
-
-
-/**
  * User login.
  *
+ * @param {String} uid unique id for user
+ * @param {String} sid serverID
  * @param {String} uid unique id for user
  *
  */
