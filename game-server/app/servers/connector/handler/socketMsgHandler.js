@@ -1,6 +1,6 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var socketCmd = require('../../../models/socketCmd')
-var gameConfig = require('../../../models/gameConfig')
+var GameConfig = require('../../../models/gameConfig')
 var utils = require('../../../util/utils')
 var Code = require('../../../../../shared/code');
 module.exports = function(app) {
@@ -56,7 +56,7 @@ var login = function(msg, session, next) {
 			next(null, {
 				code: Code.OK,
 				userData: res,
-				gameList: gameConfig.gameList
+				gameList: GameConfig.gameList
 			});
 		}
 	});
@@ -65,7 +65,7 @@ var login = function(msg, session, next) {
 //请求加入场次
 var enterGroupLevel = function (msg, session, next) {
 	var level = msg.level;
-	var serverType = eval(gameConfig.groupServerList[level]);
+	var serverType = eval(GameConfig.groupServerList[level]);
 };
 
 //拉取个人信息

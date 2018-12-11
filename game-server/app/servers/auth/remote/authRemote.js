@@ -32,7 +32,7 @@ pro.login = function(udid, sid, cb) {
 			if (res.length === 0) { 							//没有该玩家，创建玩家
 				userDao.createNewUser(udid, callBack);
 			} else {
-				utils.invokeCallback(callBack, null, res);
+				utils.invokeCallback(callBack, null, res[0]);
 			}
 		}
 	], function (err, res) {
@@ -43,6 +43,8 @@ pro.login = function(udid, sid, cb) {
 
 			//将用户信息写入redis
 		}
+
+		utils.printObj(res);
 
 		utils.invokeCallback(cb, err, res);
 	});

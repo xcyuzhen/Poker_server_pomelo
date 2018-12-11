@@ -5,8 +5,8 @@
             {"id":"connector-server-2", "host":"127.0.0.1", "port":4051, "clientPort": 3051, "frontend": true},
             {"id":"connector-server-3", "host":"127.0.0.1", "port":4052, "clientPort": 3052, "frontend": true}
         ],
-        "ddzGroupOne":[
-            {"id":"ddzGroupOne-server-1", "host":"127.0.0.1", "port":7150}
+        "ddz":[
+            {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
@@ -26,8 +26,8 @@
             {"id":"chat-server-2", "host":"127.0.0.1", "port":6051},
             {"id":"chat-server-3", "host":"127.0.0.1", "port":6052}
         ],
-        "ddzGroupOne":[
-            {"id":"ddzGroupOne-server-1", "host":"127.0.0.1", "port":7150}
+        "ddz":[
+            {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
