@@ -41,6 +41,12 @@ app.configure('production|development', "auth", function () {
     app.set("dbclient", dbclient);
 })
 
+app.configure('production|development', "auth|connector|ddz", function () {
+	app.loadConfig("redisConfig", app.getBase() + "/config/redis.json");
+    var redisClient = require("./app/util/redisUtil").create();
+    app.set("redisClient", redisClient);
+})
+
 // start app
 app.start();
 

@@ -2,6 +2,7 @@ var userDao = require('../../../dao/userDao');
 var Code = require('../../../../../shared/code');
 var utils = require('../../../util/utils');
 var async = require('async');
+var redisUtil = require("../../../util/redisUtil");
 
 module.exports = function(app) {
 	return new Remote(app);
@@ -42,6 +43,19 @@ pro.login = function(udid, sid, cb) {
 			channel.add(res.mid, sid);
 
 			//将用户信息写入redis
+			redisUtil.setUserData(res, function (err) {
+				if (!err) {
+					console.log("AAAAAAAAAAAAAAAA 存redis成功");
+
+					redisUtil.getUserData(res.mid, function (err, data) {
+						if (!err) {
+							console.log("BBBBBBBBBBBBBBBBBB 取redis成功");
+							utils.printObj(data);
+						}
+					});
+				}
+			});
+			var infoStr = JSON.stringify(res);
 		}
 
 		utils.printObj(res);

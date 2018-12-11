@@ -9,3 +9,7 @@ var Remote = function(app) {
 
 var pro = Remote.prototype;
 
+//加入场次
+pro.enterGroupLevel = function (mid, groupLev, cb) {
+
+};

@@ -64,8 +64,14 @@ var login = function(msg, session, next) {
 
 //请求加入场次
 var enterGroupLevel = function (msg, session, next) {
+	var self = this;
+	var mid = session.uid;
 	var level = msg.level;
-	var serverType = eval(GameConfig.groupServerList[level]);
+	var serverType = GameConfig.groupServerList[level];
+
+	self.app.rpc.serverType.roomRemote.enterGroupLevel(session, mid, function (err, res) {
+		
+	});
 };
 
 //拉取个人信息

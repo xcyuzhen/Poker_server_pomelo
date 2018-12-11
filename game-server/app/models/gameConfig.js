@@ -1,4 +1,5 @@
 module.exports = {
+    //发给前端的场次配置
     gameList: [
         {
             id: 1,
@@ -22,14 +23,15 @@ module.exports = {
         },
     ],
 
+    //后端自己用的配置
     groupServerList: {
-        11000000: "mjGroupOne",
-        12000000: "mjGroupTwo",
-        13000000: "mjGroupThree",
-        14000000: "mjGroupFour",
-        21000000: "ddzGroupOne",
-        22000000: "ddzGroupTwo",
-        23000000: "ddzGroupThree",
-        24000000: "ddzGroupFour",
+        11000000: "ddz",
+        12000000: "ddz",
+        13000000: "ddz",
+        14000000: "ddz",
+        21000000: "ddz",
+        22000000: "ddz",
+        23000000: "ddz",
+        24000000: "ddz",
     },
 }

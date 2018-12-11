@@ -5,7 +5,9 @@ var consts = require('../consts/consts');
 var utils = require('../util/utils');
 
 var userDao = module.exports;
+var userInfoMap = {};
 
+//根据Udid获取用户信息
 userDao.getUserByUdid = function (udid, cb) {
 	//根据udid查找玩家账号
 	var sql = "SELECT * FROM user_info WHERE udid = ? ;";
@@ -20,6 +22,7 @@ userDao.getUserByUdid = function (udid, cb) {
 	});
 };
 
+//创建新用户
 userDao.createNewUser = function (udid, cb) {
 	var sql = "INSERT INTO user_info (udid, appid) VALUES (?, ?) ;";
 	pomelo.app.get('dbclient').query(sql, [udid, udid], function(err, res) {
@@ -52,17 +55,24 @@ userDao.createNewUser = function (udid, cb) {
 	})
 };
 
-/**
- * get user infomation by userId
- * @param {String} uid UserId
- * @param {function} cb Callback function
- */
-userDao.getUserById = function (uid, cb){
+//根据mid获取用户信息
+userDao.getUserByMid = function (mid, cb){
+	//新检查redis中是否有用户信息
+	var key = mid + "_userInfo";
+	var userInfoStr = userInfoMap[key]
+	if (!!userInfoStr) {
+		var userData = JSON.parse(userInfoStr);
+		utils.invokeCallback(cb, null, userData);
+	} else {
+		//redis中没有玩家信息，从数据库中取
+		
+	}
+
 	var sql = 'select * from User where id = ?';
 	var args = [uid];
 	pomelo.app.get('dbclient').query(sql,args,function(err, res){
 		if(err !== null){
-			utils.invokeCallback(cb,err.message, null);
+			utils.invokeCallback(cb, err.message, null);
 			return;
 		}
 
@@ -74,23 +84,7 @@ userDao.getUserById = function (uid, cb){
 	});
 };
 
-/**
- * Create a new user
- * @param (String) username
- * @param {String} password
- * @param {String} from Register source
- * @param {function} cb Call back function.
- */
-userDao.createUser = function (username, password, from, cb){
-	var sql = 'insert into User (name,password,`from`,loginCount,lastLoginTime) values(?,?,?,?,?)';
-	var loginTime = Date.now();
-	var args = [username, password, from || '', 1, loginTime];
-	pomelo.app.get('dbclient').insert(sql, args, function(err,res){
-		if(err !== null){
-			utils.invokeCallback(cb, {code: err.number, msg: err.message}, null);
-		} else {
-			var user = new User({id: res.insertId, name: username, password: password, loginCount: 1, lastLoginTime:loginTime});
-			utils.invokeCallback(cb, null, user);
-		}
-	});
+//刷新用户信息
+userDao.updateUserInfo = function (userData, cb) {
+
 };
