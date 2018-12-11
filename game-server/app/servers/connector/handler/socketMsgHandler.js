@@ -1,7 +1,8 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var socketCmd = require('../../../models/socketCmd')
 var gameConfig = require('../../../models/gameConfig')
-var utils = require('../../../../util/utils')
+var utils = require('../../../util/utils')
+var Code = require('../../../../../shared/code');
 module.exports = function(app) {
 	return new Handler(app);
 };
@@ -28,7 +29,7 @@ handler.socketMsg = function(msg, session, next) {
 		logger.error('没有找到处理函数, cmd = ' + msgSocketCmd);
 
 		next(null, {
-			code: 201,
+			code: Code.NO_HANDLER,
 			msg: "没有找到处理函数"
 		})
 	}
@@ -39,20 +40,21 @@ handler.socketMsg = function(msg, session, next) {
 var login = function(msg, session, next) {
 	var self = this;
 	var sessionService = self.app.get('sessionService');
-	self.app.rpc.user.userRemote.login(session, msg.udid, self.app.get('serverId'), function (err, res) {
+	self.app.rpc.auth.authRemote.login(session, msg.udid, self.app.get('serverId'), function (err, res) {
 		if (err) {
 			logger.error('login error ' + err.stack);
+			next(err);
 		} else {
 			//该mid已经登录了，将第一次登录的人踢出
-			var oldSession = sessionService.getByUid(msg.mid)
+			var oldSession = sessionService.getByUid(res.mid)
 			if( !! oldSession) {
-				sessionService.kick(msg.mid, "您的账号在其他地方登录");
+				sessionService.kick(res.mid, "您的账号在其他地方登录");
 			}
 
 			session.bind(res.mid);
 			session.on('closed', userOffLine.bind(null, self.app));
 			next(null, {
-				code: 200,
+				code: Code.OK,
 				userData: res,
 				gameList: gameConfig.gameList
 			});
@@ -79,7 +81,7 @@ var userOffLine = function (app, session) {
 		return;
 	}
 
-	app.rpc.user.userRemote.userOffLine(session, session.uid, app.get('serverId'), null);
+	app.rpc.auth.authRemote.userOffLine(session, session.uid, app.get('serverId'), null);
 
 	//如果该用户在游戏房间中，通知其他人，该玩家离线
 };

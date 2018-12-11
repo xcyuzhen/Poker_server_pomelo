@@ -5,32 +5,11 @@
             {"id":"connector-server-2", "host":"127.0.0.1", "port":4051, "clientPort": 3051, "frontend": true},
             {"id":"connector-server-3", "host":"127.0.0.1", "port":4052, "clientPort": 3052, "frontend": true}
         ],
-        "mjGroupOne":[
-            {"id":"mjGroupOne-server-1", "host":"127.0.0.1", "port":7050}
-        ],
-        "mjGroupTwo":[
-            {"id":"mjGroupTwo-server-1", "host":"127.0.0.1", "port":7051}
-        ],
-        "mjGroupThree":[
-            {"id":"mjGroupThree-server-1", "host":"127.0.0.1", "port":7052}
-        ],
-        "mjGroupFour":[
-            {"id":"mjGroupFour-server-1", "host":"127.0.0.1", "port":7053}
-        ],
         "ddzGroupOne":[
             {"id":"ddzGroupOne-server-1", "host":"127.0.0.1", "port":7150}
         ],
-        "ddzGroupTwo":[
-            {"id":"ddzGroupTwo-server-1", "host":"127.0.0.1", "port":7151}
-        ],
-        "ddzGroupThree":[
-            {"id":"ddzGroupThree-server-1", "host":"127.0.0.1", "port":7152}
-        ],
-        "ddzGroupFour":[
-            {"id":"ddzGroupFour-server-1", "host":"127.0.0.1", "port":7153}
-        ],
-        "user":[
-            {"id":"user-server-1", "host":"127.0.0.1", "port":5050}
+        "auth":[
+            {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
         ],
         "gate":[
            {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
@@ -47,32 +26,11 @@
             {"id":"chat-server-2", "host":"127.0.0.1", "port":6051},
             {"id":"chat-server-3", "host":"127.0.0.1", "port":6052}
         ],
-        "mjGroupOne":[
-            {"id":"mjGroupOne-server-1", "host":"127.0.0.1", "port":7050}
-        ],
-        "mjGroupTwo":[
-            {"id":"mjGroupTwo-server-1", "host":"127.0.0.1", "port":7051}
-        ],
-        "mjGroupThree":[
-            {"id":"mjGroupThree-server-1", "host":"127.0.0.1", "port":7052}
-        ],
-        "mjGroupFour":[
-            {"id":"mjGroupFour-server-1", "host":"127.0.0.1", "port":7053}
-        ],
         "ddzGroupOne":[
             {"id":"ddzGroupOne-server-1", "host":"127.0.0.1", "port":7150}
         ],
-        "ddzGroupTwo":[
-            {"id":"ddzGroupTwo-server-1", "host":"127.0.0.1", "port":7151}
-        ],
-        "ddzGroupThree":[
-            {"id":"ddzGroupThree-server-1", "host":"127.0.0.1", "port":7152}
-        ],
-        "ddzGroupFour":[
-            {"id":"ddzGroupFour-server-1", "host":"127.0.0.1", "port":7153}
-        ],
-        "user":[
-            {"id":"user-server-1", "host":"127.0.0.1", "port":5050}
+        "auth":[
+            {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
         ],
         "gate":[
            {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
