@@ -88,8 +88,6 @@ var userOffLine = function (app, session) {
 	}
 
 	app.rpc.auth.authRemote.userOffLine(session, session.uid, app.get('serverId'), null);
-
-	//如果该用户在游戏房间中，通知其他人，该玩家离线
 };
 
 handler.initSocketCmdConfig = function() {

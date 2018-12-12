@@ -30,7 +30,7 @@ pro.login = function(udid, sid, cb) {
 			userDao.getUserByUdid(udid, callBack);
 		},
 		function (res, callBack) {
-			if (res.length === 0) { 							//没有该玩家，创建玩家
+			if (res.length === 0) {
 				userDao.createNewUser(udid, callBack);
 			} else {
 				utils.invokeCallback(callBack, null, res[0]);
@@ -43,24 +43,18 @@ pro.login = function(udid, sid, cb) {
 			channel.add(res.mid, sid);
 
 			//将用户信息写入redis
-			redisUtil.setUserData(res, function (err) {
-				if (!err) {
-					console.log("AAAAAAAAAAAAAAAA 存redis成功");
-
-					redisUtil.getUserData(res.mid, function (err, data) {
-						if (!err) {
-							console.log("BBBBBBBBBBBBBBBBBB 取redis成功");
-							utils.printObj(data);
+			redisUtil.setUserData(res, true, function (rErr) {
+				if (rErr) {
+					utils.invokeCallback(cb, rErr);
+				} else {
+					redisUtil.getCommonUserData(res.mid, function (rErr, data) {
+						if (!rErr) {
+							utils.invokeCallback(cb, err, data);
 						}
 					});
 				}
 			});
-			var infoStr = JSON.stringify(res);
 		}
-
-		utils.printObj(res);
-
-		utils.invokeCallback(cb, err, res);
 	});
 };
 
@@ -76,9 +70,18 @@ pro.userOffLine = function (mid, sid, cb) {
 	var channel = this.channelService.getChannel("Hall", true);
 	channel.leave(mid, sid);
 
-	//修改redis中该用户的在线状态
+	redisUtil.isUserInGame(mid, function (err, resp) {
+		if (!err) {
+			if (resp) {
+				//玩家在游戏中，远程调用到房间逻辑
 
-	utils.invokeCallback(cb);
+			} else {
+				//玩家不在游戏中，删除redis中该玩家信息
+				redisUtil.deleteUserData(mid);
+			}
+		}
+		utils.invokeCallback(cb, err);
+	})
 };
 
 /**

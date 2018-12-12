@@ -32,6 +32,17 @@ print_r = function (obj, indent) {
 };
 
 /**
+ * 检查mid是否合法
+ */
+utils.midCheck = function (mid) {
+    if (mid && mid > 0) {
+        return true;
+    }
+
+    return false;
+};
+
+/**
  * print object
  */
 utils.printObj = function (obj) {
