@@ -39,12 +39,17 @@ app.configure('production|development', "auth", function () {
 	app.loadConfig("mysql", app.getBase() + "./../shared/config/mysql.json");
     var dbclient = require("./app/dao/mysql/sqlPool.js").create();
     app.set("dbclient", dbclient);
-})
+});
 
 app.configure('production|development', "auth|connector|ddz", function () {
 	app.loadConfig("redisConfig", app.getBase() + "/config/redis.json");
     var redisClient = require("./app/util/redisUtil").create();
     app.set("redisClient", redisClient);
+});
+
+app.configure('production|development', "ddz", function () {
+	var ddzRoomMgr = require('./app/components/ddzRoomMgr');
+	app.load(ddzRoomMgr);
 })
 
 // start app

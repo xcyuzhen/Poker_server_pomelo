@@ -6,7 +6,7 @@ var async = require('async');
 
 var redisUtil = module.exports;
 
-var USER_DATA_FIELD_ALL = ["mid", "nick", "sex", "gold", "diamond", "head_url", "gameServerID"];
+var USER_DATA_FIELD_ALL = ["mid", "nick", "sex", "gold", "diamond", "head_url", "gameServerID", "state"];
 var USER_DATA_FIELD_COMMON = ["mid", "nick", "sex", "gold", "diamond", "head_url"];
 
 var getKeyByMid = function (mid) {
@@ -20,13 +20,14 @@ var getKeyByMid = function (mid) {
 
 var getDefaultUserData = function () {
 	var data = {
-		mid: 0,
-		nick: "",
-		sex: 0,
-		gold: 0,
-		diamond: 0,
-		head_url: "",
-		gameServerID: "",
+		mid: 0, 									//mid
+		nick: "", 									//昵称
+		sex: 0, 									//性别
+		gold: 0, 									//金币数量
+		diamond: 0, 								//钻石数量
+		head_url: "", 								//头像
+		gameServerID: "", 							//当前所在游戏服务器ID ""-没有在游戏中 "ddz-server-1"-服务器ID
+		state: 0,   								//当前状态 0-大厅 1-匹配中 2-游戏中
 	};
 
 	return data
@@ -210,6 +211,26 @@ redisUtil.isUserInGame = function (mid, cb) {
 			} else {
 				utils.invokeCallback(cb, err, false);
 			}
+		}
+	})
+};
+
+/**
+ * 玩家是否在游戏中
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {String}   	field 		字段名字
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.getUserDataByField = function (mid, field, cb) {
+	var key = getKeyByMid(mid)
+	pomelo.app.get('redisClient').hget(key, field, function(err, resp) {
+		if (err) {
+			logger.error("redisUtil.getUserDataByField Error:" + err);
+			utils.invokeCallback(cb, err);
+		} else {
+			utils.invokeCallback(cb, err, resp);
 		}
 	})
 };

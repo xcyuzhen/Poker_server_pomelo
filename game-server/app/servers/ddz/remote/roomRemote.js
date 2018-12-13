@@ -4,7 +4,7 @@ module.exports = function(app) {
 
 var Remote = function(app) {
 	this.app = app;
-	this.channelService = app.get('channelService');
+	this.roomMgrService = app.get('roomMgrService');
 };
 
 var pro = Remote.prototype;

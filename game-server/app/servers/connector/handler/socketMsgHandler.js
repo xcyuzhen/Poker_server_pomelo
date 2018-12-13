@@ -3,6 +3,8 @@ var socketCmd = require('../../../models/socketCmd')
 var GameConfig = require('../../../models/gameConfig')
 var utils = require('../../../util/utils')
 var Code = require('../../../../../shared/code');
+var redisUtil = require("../../../util/redisUtil");
+
 module.exports = function(app) {
 	return new Handler(app);
 };
@@ -69,9 +71,22 @@ var enterGroupLevel = function (msg, session, next) {
 	var level = msg.level;
 	var serverType = GameConfig.groupServerList[level];
 
-	self.app.rpc.serverType.roomRemote.enterGroupLevel(session, mid, function (err, res) {
-		
-	});
+	//检查当前是否在匹配中或者游戏中
+	redisUtil.getUserDataByField(mid, "state", function (err, resp) {
+		if (err) {
+			next(err);
+		} else {
+			if (resp > 0) {
+				//如果当前玩家已经在匹配中，不再处理
+				next(null)
+			} else {
+				//玩家在大厅，进入游戏服务器进行匹配
+				self.app.rpc.serverType.roomRemote.enterGroupLevel(session, mid, function (err, res) {
+					
+				});
+			}
+		}
+	})
 };
 
 //拉取个人信息

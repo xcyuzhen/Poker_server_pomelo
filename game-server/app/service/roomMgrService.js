@@ -1,22 +1,17 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
-
-/**
- * constant
- */
-var ST_INITED = 0;
-var ST_DESTROYED = 1;
+var Consts = require('../consts/consts');
 
 /**
  * 房间管理服务.
  *
  * RoomMgrService is created by roomMgr component
- * component of pomelo and channel service would be accessed by `app.get('roomMgrService')`.
+ * component of pomelo and roomMgr service would be accessed by `app.get('roomMgrService')`.
  *
  * @class
  * @constructor
  */
 var RoomMgrService = function(app, opts) {
-    opts = opts || {};
+	opts = opts || {};
     this.app = app;
 };
 
@@ -28,6 +23,7 @@ pro.start = function(cb) {
 	process.nextTick(cb);
 };
 
-pro.afterStart = function (cb) {
-	process.nextTick(cb);
+//初始化房间
+pro.initRooms = function (RoomObj) {
+	
 }
