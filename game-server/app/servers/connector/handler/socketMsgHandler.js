@@ -1,7 +1,7 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
-var socketCmd = require('../../../models/socketCmd')
-var GameConfig = require('../../../models/gameConfig')
-var utils = require('../../../util/utils')
+var socketCmd = require('../../../models/socketCmd');
+var GameConfig = require('../../../models/gameConfig');
+var utils = require('../../../util/utils');
 var Code = require('../../../../../shared/code');
 var redisUtil = require("../../../util/redisUtil");
 
@@ -24,7 +24,7 @@ handler.socketMsg = function(msg, session, next) {
 	}
 
 	var msgSocketCmd = msg.socketCmd;
-	var processerFun = self.socketCmdConfig[msgSocketCmd]
+	var processerFun = self.socketCmdConfig[msgSocketCmd];
 	if (!! processerFun) {
 		processerFun.call(self, msg, session, next);
 	} else {
@@ -54,7 +54,7 @@ var login = function(msg, session, next) {
 			}
 
 			session.bind(res.mid);
-			session.on('closed', userOffLine.bind(null, self.app));
+			session.on('closed', userOffline.bind(null, self.app));
 			next(null, {
 				code: Code.OK,
 				userData: res,
@@ -68,21 +68,31 @@ var login = function(msg, session, next) {
 var enterGroupLevel = function (msg, session, next) {
 	var self = this;
 	var mid = session.uid;
-	var level = msg.level;
-	var serverType = GameConfig.groupServerList[level];
+	var level = msg.level.toString();
+	var gameID = parseInt(level.substr(0, 1));
+	var serverType = GameConfig.groupServerList[gameID];
 
 	//检查当前是否在匹配中或者游戏中
-	redisUtil.getUserDataByField(mid, "state", function (err, resp) {
+	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
 		if (err) {
 			next(err);
 		} else {
-			if (resp > 0) {
+			utils.printObj(resp);
+			if (resp[0] > 0) {
 				//如果当前玩家已经在匹配中，不再处理
-				next(null)
+				logger.info('玩家正在匹配或者已经在房间中，不做处理 mid = ', mid, resp[0]);
+				next(null);
 			} else {
+				//修改redis中玩家状态
+				redisUtil.setUserData({mid: mid, state: 1});
+
 				//玩家在大厅，进入游戏服务器进行匹配
-				self.app.rpc.serverType.roomRemote.enterGroupLevel(session, mid, function (err, res) {
-					
+				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, msg, function (err, res) {
+					if (err || (res && res.code !== Code.OK)) {
+						redisUtil.setUserData({mid: mid, state: 0});
+					}
+
+					next(err, res);
 				});
 			}
 		}
@@ -96,13 +106,13 @@ var requestUserInfo = function (msg, session, next) {
 ////////////////////////////处理函数end////////////////////////////
 
 //用户离线
-var userOffLine = function (app, session) {
+var userOffline = function (app, session) {
 	console.log("BBBBBBBBBBBBBBBBB 用户离线, mid = " + session.uid);
 	if(!session || !session.uid) {
 		return;
 	}
 
-	app.rpc.auth.authRemote.userOffLine(session, session.uid, app.get('serverId'), null);
+	app.rpc.auth.authRemote.userOffline(session, session.uid, app.get('serverId'), null);
 };
 
 handler.initSocketCmdConfig = function() {

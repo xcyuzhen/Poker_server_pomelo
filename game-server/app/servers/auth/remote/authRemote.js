@@ -43,6 +43,7 @@ pro.login = function(udid, sid, cb) {
 			channel.add(res.mid, sid);
 
 			//将用户信息写入redis
+			res.sid = sid;
 			redisUtil.setUserData(res, true, function (rErr) {
 				if (rErr) {
 					utils.invokeCallback(cb, rErr);
@@ -66,15 +67,19 @@ pro.login = function(udid, sid, cb) {
  * @param  {Function} 	cb callBack
  * @return {Void}
  */
-pro.userOffLine = function (mid, sid, cb) {
+pro.userOffline = function (mid, sid, cb) {
+	var self = this;
+
 	var channel = this.channelService.getChannel("Hall", true);
 	channel.leave(mid, sid);
 
-	redisUtil.isUserInGame(mid, function (err, resp) {
+	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID"], function (err, resp) {
 		if (!err) {
-			if (resp) {
-				//玩家在游戏中，远程调用到房间逻辑
+			utils.printObj(resp);
 
+			if (resp[1] != undefined && resp[1] != "") {
+				//玩家在游戏中，远程调用到房间逻辑
+				self.app.rpc[resp[0]].roomRemote.userOffline.toServer(resp[1], mid, null);
 			} else {
 				//玩家不在游戏中，删除redis中该玩家信息
 				redisUtil.deleteUserData(mid);

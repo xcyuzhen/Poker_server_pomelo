@@ -1,5 +1,6 @@
 var RoomMgrService = require('../service/roomMgrService');
 var DdzRoom = require('../room/ddzRoom');
+var GameConfig = require('../models/gameConfig');
 
 module.exports = function(app, opts) {
     var cmp = new Component(app, opts);
@@ -42,6 +43,7 @@ var pro = Component.prototype;
 pro.name = '__roomMgr__';
 
 pro.afterStart = function (cb) {
+    this.service.initGameConfig.call(this.service, GameConfig.gameList[1]);
     this.service.initRooms.call(this.service, DdzRoom);
     process.nextTick(cb);
 }
