@@ -178,14 +178,9 @@ var enterGroupLevel = function (mid, msg, cb) {
 					var roomNum = emptyRoom.getRoomNumber();
 					self.roomMap[roomNum] = emptyRoom;
 
-					console.log("新房间 ", roomNum);
-					console.log("房间个数 = ", utils.size(self.roomMap));
-
 					//将玩家加入该房间
 					emptyRoom.enterRoom(mid);
 				} else {
-					console.log("已有房间");
-
 					//3.等待开局房间列表中找到符合条件的房间，将玩家加入;
 					room.enterRoom(mid);
 				}
