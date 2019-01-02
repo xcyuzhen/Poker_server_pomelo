@@ -24,12 +24,13 @@ module.exports = {
 
     //场次服务器列表
     groupServerList: {
-        1: "ddz",
+        1: "mj",
         2: "ddz",
     },
 
     //游戏服务器的flag
     gameServerFlag: {
+        "mj-server-1": 1,
         "ddz-server-1": 1,
     },
 }

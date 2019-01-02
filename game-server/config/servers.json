@@ -8,6 +8,9 @@
         "ddz":[
             {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
         ],
+        "mj":[
+            {"id":"mj-server-1", "host":"127.0.0.1", "port":7250}
+        ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
         ],
@@ -28,6 +31,9 @@
         ],
         "ddz":[
             {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
+        ],
+        "mj":[
+            {"id":"mj-server-1", "host":"127.0.0.1", "port":7250}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}

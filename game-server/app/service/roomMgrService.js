@@ -22,7 +22,6 @@ var RoomMgrService = function(app, opts) {
     this.readyRoomList = [];					//等待开局的房间
     this.roomMap = {}; 							//有房间号的roomMap
     this.gameConfig = null;
-    this.test = "test test test test test";
 };
 
 module.exports = RoomMgrService;
@@ -71,7 +70,6 @@ pro.recycleRoom = function (roomIndex) {
 
 //玩家离线
 pro.userOffline = function (mid, cb) {
-	console.log(this.test);
 	var room = getRoomByMid.call(this, mid);
 	if (room) {
 		room.userOffline(mid);
