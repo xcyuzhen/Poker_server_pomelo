@@ -1,10 +1,13 @@
 var logger = require('pomelo-logger').getLogger(__filename);
 var pomelo = require('pomelo');
 var Consts = require('../consts/consts');
+var MjConsts = require('../consts/mjConsts');
 var utils = require('../util/utils');
 var redisUtil = require("../util/redisUtil");
 var GameConfig = require('../models/gameConfig');
 var Code = require('../../../shared/code');
+var UserData = require('../userData/mjUserData');
+var SocketCmd = require('../models/socketCmd');
 
 var Room = function (app, opts) {
 	this.app = app;
@@ -37,6 +40,9 @@ pro.initRoom = function (roomConfig) {
 	this.roomData.maxPlayerNum = 3;
 
 	//初始化牌局数据
+	this.gameData.cardList = []; 					//牌列表
+	this.gameData.curTurnSeatID = 0; 				//当前摸牌打牌操作座位号
+	this.gameData.leftTime = 0; 					//当前操作倒计时
 
 	//初始化channel
 	this.channel = this.channelService.getChannel(roomNum, true);
@@ -62,14 +68,7 @@ pro.enterRoom = function (mid) {
 					logger.error("mjRoom.enterRoom 获取用户数据失败，mid = ", mid);
 				} else {
 					console.log("获取玩家所有数据");
-					var userData = createUserData.call(self);
-
-					//拷贝玩家数据
-					for (var key in userData) {
-						if (userDataAll[key] !== undefined) {
-							userData[key] = userDataAll[key];
-						}
-					}
+					var userData = new UserData(userDataAll);
 
 					//初始化玩家的位置
 					userData.seatID = getAvailableSeatID.call(self);
@@ -81,6 +80,44 @@ pro.enterRoom = function (mid) {
 
 					//将玩家添加进channel
 					self.channel.add(mid, userDataAll.sid);
+
+					//将房间全部信息发给刚进入的玩家
+					var param = {
+						groupName: MjConsts.MSG_GROUP_NAME,
+						res: {
+							sockeCmd: SocketCmd.ENTER_ROOM,
+							roomData: self.roomData,
+							userList: self.userList,
+						},
+					};
+					var uidList = [{uid: mid, sid: self.channel.getMember(mid)['sid']}]
+					self.channelService.pushMessageByUids("onSocketMsg", param, uidList, {}, function (err) {
+						if (err) {
+							logger.error("mjRoom.enterRoom 返回玩家进入房间失败, err = ", err);
+						}
+					});
+
+					//通知其他玩家有新玩家加入
+					var otherUidList = [];
+					for (var tmpMid in self.userList) {
+						if (tmpMid !== mid) {
+							otherUidList.push({uid: tmpMid, sid: self.channel.getMember(tmpMid)['sid']});
+						}
+					}
+					if (otherUidList.length > 0) {
+						var param = {
+							groupName: MjConsts.MSG_GROUP_NAME,
+							res: {
+								sockeCmd: SocketCmd.USER_ENTER,
+								userData: userData,
+							},
+						};
+						self.channel.pushMessageByUids("onSocketMsg", param, otherUidList, {}, function (err) {
+							if (err) {
+								logger.error("mjRoom.enterRoom 通知其他玩家有新玩家加入失败, err = ", err);
+							}
+						});
+					}
 				}
 			});
 		}
@@ -189,23 +226,6 @@ pro.isUserInRoom = function (mid) {
 };
 
 /////////////////////////////////////功能函数begin/////////////////////////////////////
-//初始化userData
-var createUserData = function () {
-	var userData = {
-		mid: 0,
-		nick: "",
-		sex: 0,
-		gold: 0,
-		diamond: 0,
-		head_url: "",
-		seatID: 0,
-		ready: 0,
-		online: 1,
-	};
-
-	return userData;
-}
-
 //获取可用的座位号
 var getAvailableSeatID = function () {
 	var seatUse = [];

@@ -43,7 +43,7 @@ var pro = Component.prototype;
 pro.name = '__roomMgr__';
 
 pro.afterStart = function (cb) {
-    this.service.initGameConfig.call(this.service, GameConfig.gameList[1]);
+    this.service.initGameConfig.call(this.service, GameConfig.gameList[0]);
     this.service.initRooms.call(this.service, MjRoom);
     process.nextTick(cb);
 }

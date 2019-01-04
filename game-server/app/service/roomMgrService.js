@@ -74,7 +74,7 @@ pro.userOffline = function (mid, cb) {
 	if (room) {
 		room.userOffline(mid);
 	} else {
-		console.log("没有找到了玩家所在房间");
+		console.log("没有找到玩家所在房间");
 		redisUtil.deleteUserData(mid);
 	}
 
@@ -85,7 +85,6 @@ pro.userOffline = function (mid, cb) {
 //查找用户所在房间
 var getRoomByMid = function (mid) {
 	console.log("房间个数 = ", utils.size(this.roomMap));
-	console.log(this.test);
 
 	//遍历人数已经满的房间
 	for (var roomNum in this.roomMap) {

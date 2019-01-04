@@ -1,5 +1,5 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
-var socketCmd = require('../../../models/socketCmd');
+var SocketCmd = require('../../../models/socketCmd');
 var GameConfig = require('../../../models/gameConfig');
 var utils = require('../../../util/utils');
 var Code = require('../../../../../shared/code');
@@ -64,6 +64,11 @@ var login = function(msg, session, next) {
 	});
 };
 
+//拉取个人信息
+var requestUserInfo = function (msg, session, next) {
+
+};
+
 //请求加入场次
 var enterGroupLevel = function (msg, session, next) {
 	var self = this;
@@ -74,6 +79,36 @@ var enterGroupLevel = function (msg, session, next) {
 
 	//检查当前是否在匹配中或者游戏中
 	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
+		if (err) {
+			next(err);
+		} else {
+			if (resp[0] > 0) {
+				//如果当前玩家已经在匹配中，不再处理
+				logger.info('玩家正在匹配或者已经在房间中，不做处理 mid = ', mid, resp[0]);
+				next(null);
+			} else {
+				//修改redis中玩家状态
+				redisUtil.setUserData({mid: mid, state: 1});
+
+				//玩家在大厅，进入游戏服务器进行匹配
+				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, msg, function (err, res) {
+					if (err || (res && res.code !== Code.OK)) {
+						redisUtil.setUserData({mid: mid, state: 0});
+					}
+
+					next(err, res);
+				});
+			}
+		}
+	});
+};
+
+var commonRoomMsg = function (msg, session, next) {
+	var self = this;
+	var mid = session.uid;
+
+	//从redis中拿该用户的游戏服务器，进行消息转发
+	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID"], function (err, resp) {
 		if (err) {
 			next(err);
 		} else {
@@ -96,12 +131,7 @@ var enterGroupLevel = function (msg, session, next) {
 				});
 			}
 		}
-	})
-};
-
-//拉取个人信息
-var requestUserInfo = function (msg, session, next) {
-
+	});
 };
 ////////////////////////////处理函数end////////////////////////////
 
@@ -119,8 +149,9 @@ handler.initSocketCmdConfig = function() {
 	var self = this;
 
 	self.socketCmdConfig = {
-		[socketCmd.LOGIN]: login,
-		[socketCmd.REQUEST_USER_INFO]: requestUserInfo,
-		[socketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
+		[SocketCmd.LOGIN]: login,
+		[SocketCmd.REQUEST_USER_INFO]: requestUserInfo,
+		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
+		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 	};
 };
