@@ -82,7 +82,7 @@ pro.userOffline = function (mid, sid, cb) {
 				self.app.rpc[resp[0]].roomRemote.userOffline.toServer(resp[1], mid, null);
 			} else {
 				//玩家不在游戏中，删除redis中该玩家信息
-				redisUtil.deleteUserData(mid);
+				redisUtil.logout(mid);
 			}
 		}
 		utils.invokeCallback(cb, err);

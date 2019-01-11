@@ -8,7 +8,7 @@ module.exports = {
 		0x41,0x42,0x43,0x44, 													//风
 	],
 
-	OPE_CODE: {
+	OPE_TYPE: {
 		GUO: 0,
 		PENG: 1,
 		GANG: 2,

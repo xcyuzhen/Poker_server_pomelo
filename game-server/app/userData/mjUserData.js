@@ -14,10 +14,7 @@ var UserData = function (data) {
 
 	//玩家牌局数据
 	this.handCards = []; 						//手牌列表
-	this.pengCards = []; 						//碰牌列表
-	this.gangCards = []; 						//杠牌列表
-	this.anGangCards = []; 						//暗杠列表
-	this.buGangCards = []; 						//补杠列表
+	this.extraCards = []; 						//碰牌列表
 	this.handCardsNum = 0; 						//手牌张数
 	this.tingList = []; 						//听牌列表
 };

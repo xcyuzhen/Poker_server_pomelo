@@ -146,7 +146,7 @@ pro.leaveRoom = function (mid, cb) {
 
 			//删除该玩家数据
 			delete(self.userList[mid]);
-			redisUtil.deleteUserData(mid);
+			redisUtil.leaveRoom(mid);
 
 			//如果该房间所有玩家都已经离开，回收该房间
 			var playerNum = getPlayerNum.call(self);
@@ -156,6 +156,7 @@ pro.leaveRoom = function (mid, cb) {
 				self.roomMgrService.recycleRoom(self.roomIndex);
 			} else {
 				//通知其他人该玩家离开
+				
 			}
 
 			utils.invokeCallback(cb, null, {

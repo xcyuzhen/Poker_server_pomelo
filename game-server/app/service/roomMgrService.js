@@ -70,12 +70,14 @@ pro.recycleRoom = function (roomIndex) {
 
 //玩家离线
 pro.userOffline = function (mid, cb) {
-	var room = getRoomByMid.call(this, mid);
+	var self = this;
+
+	var room = getRoomByMid.call(self, mid);
 	if (room) {
 		room.userOffline(mid);
 	} else {
 		console.log("没有找到玩家所在房间");
-		redisUtil.deleteUserData(mid);
+		redisUtil.logout(mid);
 	}
 
 	utils.invokeCallback(cb, null);
@@ -84,13 +86,14 @@ pro.userOffline = function (mid, cb) {
 /////////////////////////////////////功能函数begin/////////////////////////////////////
 //查找用户所在房间
 var getRoomByMid = function (mid) {
-	console.log("房间个数 = ", utils.size(this.roomMap));
+	console.log("开始查找玩家所在房间");
 
 	//遍历人数已经满的房间
 	for (var roomNum in this.roomMap) {
-		console.log("遍历房间的房间号：", roomNum);
+		console.log("查找房间号：", roomNum);
 		var tmpRoom = this.roomMap[roomNum];
 		if (tmpRoom.isUserInRoom(mid)) {
+			console.log("找到玩家所在房间");
 	    	return tmpRoom;
 	    }
 	}
@@ -175,9 +178,12 @@ var enterGroupLevel = function (mid, msg, cb) {
 					var roomNum = emptyRoom.getRoomNumber();
 					self.roomMap[roomNum] = emptyRoom;
 
+					console.log("创建新房间，准备进入，roomNum = ", roomNum)
+
 					//将玩家加入该房间
 					emptyRoom.enterRoom(mid);
 				} else {
+					console.log("找到人未满的房间，准备进入，roomNum = ", room.getRoomNumber())
 					//3.等待开局房间列表中找到符合条件的房间，将玩家加入;
 					room.enterRoom(mid);
 				}
@@ -187,12 +193,26 @@ var enterGroupLevel = function (mid, msg, cb) {
 };
 
 //请求退出房间
-var leaveRoom = function (mid, msg, cb) {
+var userLeave = function (mid, msg, cb) {
+	var self = this;
 
+	console.log("玩家" + mid + "，申请离开房间");
+	//找到玩家所在房间，离开房间操作在房间内完成
+	var room = getRoomByMid.call(self, mid);
+	if (!!room) {
+		room.leaveRoom(mid, cb);
+	} else {
+		//没有找到玩家所在房间，直接修改玩家信息
+		console.log("玩家" + mid + "，redis中修改玩家信息");
+		redisUtil.leaveRoom(mid, function () {
+			utils.invokeCallback(cb, null);
+		});
+	}
 };
 
 var socketCmdConfig = {
 	[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
+	[SocketCmd.USER_LEAVE]: userLeave,
 };
 
 /////////////////////////////////////协议处理相关end/////////////////////////////////////

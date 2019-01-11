@@ -235,3 +235,62 @@ redisUtil.getUserDataByField = function (mid, fields, cb) {
 		}
 	})
 };
+
+////////////////////////////////////玩家行为begin////////////////////////////////////
+/**
+ * 玩家请求进入场次
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.requestEnterGroupLevel = function (mid, cb) {
+	redisUtil.setUserData({mid: mid, state: 1}, false, cb);
+};
+
+/**
+ * 玩家退出登录
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.logout = function (mid, cb) {
+	redisUtil.deleteUserData(mid, cb);
+};
+
+/**
+ * 玩家退出登录
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.enterRoom = function (mid, serverType, serverID, cb) {
+	redisUtil.setUserData({mid: mid, gameServerType: serverType, gameServerID: serverID, state: 2}, false, cb);
+};
+
+/**
+ * 玩家退出登录
+ *
+ * @param  {Number}   	mid 			玩家id
+ * @param  {String}   	serverType 		服务器类型
+ * @param  {String}   	serverID 		服务器ID
+ * @param  {Function} 	cb 				回调
+ * @return {Void}
+ */
+redisUtil.enterRoom = function (mid, serverType, serverID, cb) {
+	redisUtil.setUserData({mid: mid, gameServerType: serverType, gameServerID: serverID, state: 2}, false, cb);
+};
+
+/**
+ * 玩家返回大厅
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.leaveRoom = function (mid, cb) {
+	redisUtil.setUserData({mid: mid, gameServerType: "", gameServerID: "", state: 0}, false, cb);
+};
+////////////////////////////////////玩家行为end////////////////////////////////////

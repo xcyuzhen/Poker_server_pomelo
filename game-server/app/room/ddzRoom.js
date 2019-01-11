@@ -54,7 +54,7 @@ pro.enterRoom = function (mid) {
 	var self = this;
 
 	//修改redis中玩家的状态
-	redisUtil.setUserData({mid: mid, gameServerType: self.app.getServerType(), gameServerID: self.app.getServerId(), state: 2}, false, function (err) {
+	redisUtil.enterRoom(mid, self.app.getServerType(), self.app.getServerId(), false, function (err) {
 		if (err) {
 			logger.error("ddzRoom.enterRoom error");
 		} else {
@@ -113,7 +113,7 @@ pro.leaveRoom = function (mid, cb) {
 
 			//删除该玩家数据
 			delete(self.userList[mid]);
-			redisUtil.deleteUserData(mid);
+			redisUtil.leaveRoom(mid);
 
 			//如果该房间所有玩家都已经离开，回收该房间
 			var playerNum = getPlayerNum.call(self);
