@@ -289,7 +289,6 @@ var getAvailableSeatID = function () {
 //导出发送给客户端的roomData
 var exportRoomData = function () {
 	var data = {};
-	data.
 }
 /////////////////////////////////////功能函数end/////////////////////////////////////
 
