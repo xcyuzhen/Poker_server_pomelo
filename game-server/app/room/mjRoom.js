@@ -38,15 +38,18 @@ pro.initRoom = function (roomConfig) {
 	//初始化房间数据
 	this.roomData.roomNum = roomNum;
 	this.roomData.maxPlayerNum = 3;
+	this.roomData.curPlayerNum = 0;
 
 	//初始化牌局数据
 	this.gameData.cardList = []; 					//牌列表
 	this.gameData.curTurnSeatID = 0; 				//当前摸牌打牌操作座位号
 	this.gameData.leftTime = 0; 					//当前操作倒计时
+	this.gameData.seatMidMap = {}; 					//座位号和mid的映射表
 
 	//初始化channel
 	this.channel = this.channelService.getChannel(roomNum, true);
 
+	//修改房间状态
 	this.roomState = Consts.ROOM.STATE.INITED;
 };
 
@@ -78,8 +81,31 @@ pro.enterRoom = function (mid) {
 					//将玩家添加进玩家列表
 					self.userList[mid] = userData;
 
+					//将座位号添加到座位mid映射表中
+					self.gameData.seatMidMap[userData.seatID] = mid;
+
 					//将玩家添加进channel
 					self.channel.add(mid, userDataAll.sid);
+
+					//组装发给客户端的userList
+					var clientUserList = {};
+					//已经在房间的玩家
+					var otherUidList = [];
+					//当前玩家人数
+					var curPlayerNum = 0;
+					for (var tMid in self.userList) {
+						var tUserData = self.userList[tMid];
+						clientUserList[tMid] = tUserData.exportClientData();
+
+						if (tMid !== mid) {
+							otherUidList.push({uid: tMid, sid: self.channel.getMember(tMid)['sid']});
+						}
+
+						curPlayerNum++;
+					}
+
+					//记录当前玩家人数
+					self.roomData.curPlayerNum = curPlayerNum;
 
 					//将房间全部信息发给刚进入的玩家
 					var param = {
@@ -87,7 +113,7 @@ pro.enterRoom = function (mid) {
 						res: {
 							sockeCmd: SocketCmd.ENTER_ROOM,
 							roomData: self.roomData,
-							userList: self.userList,
+							userList: clientUserList,
 						},
 					};
 					var uidList = [{uid: mid, sid: self.channel.getMember(mid)['sid']}]
@@ -98,18 +124,12 @@ pro.enterRoom = function (mid) {
 					});
 
 					//通知其他玩家有新玩家加入
-					var otherUidList = [];
-					for (var tmpMid in self.userList) {
-						if (tmpMid !== mid) {
-							otherUidList.push({uid: tmpMid, sid: self.channel.getMember(tmpMid)['sid']});
-						}
-					}
 					if (otherUidList.length > 0) {
 						var param = {
 							groupName: MjConsts.MSG_GROUP_NAME,
 							res: {
 								sockeCmd: SocketCmd.USER_ENTER,
-								userData: userData,
+								userData: userData.exportClientData(),
 							},
 						};
 						self.channel.pushMessageByUids("onSocketMsg", param, otherUidList, {}, function (err) {
@@ -129,7 +149,7 @@ pro.leaveRoom = function (mid, cb) {
 	var self = this;
 
 	console.log("玩家离开房间 mid = ", mid);
-	if (self.roomData.state === Consts.ROOM.STATE.PLAYING) {
+	if (self.roomState === Consts.ROOM.STATE.PLAYING) {
 		utils.invokeCallback(cb, null, {
 			code: Code.ROOM.GAME_PLAYING,
 			msg: "牌局进行中无法退出房间",
@@ -144,19 +164,44 @@ pro.leaveRoom = function (mid, cb) {
 		} else {
 			self.channel.leave(mid, resp[0]);
 
+			var userData = self.userList[mid];
+
+			//删除座位mid映射数据
+			delete(self.seatMidMap[userData.seatID]);
+
 			//删除该玩家数据
 			delete(self.userList[mid]);
 			redisUtil.leaveRoom(mid);
 
+			//记录当前玩家人数
+			self.roomData.curPlayerNum--;
+
 			//如果该房间所有玩家都已经离开，回收该房间
-			var playerNum = getPlayerNum.call(self);
-			console.log("房间剩余人数 playerNum = ", playerNum);
-			if (playerNum === 0) {
+			console.log("房间剩余人数 playerNum = ", self.roomData.curPlayerNum);
+			if (self.roomData.curPlayerNum === 0) {
 				self.clearRoom();
 				self.roomMgrService.recycleRoom(self.roomIndex);
 			} else {
+				var otherUidList = [];
+				for (var tMid in self.userList) {
+					otherUidList.push({uid: tMid, sid: self.channel.getMember(tMid)['sid']});
+				}
+
 				//通知其他人该玩家离开
-				
+				if (otherUidList.length > 0) {
+					var param = {
+						groupName: MjConsts.MSG_GROUP_NAME,
+						res: {
+							sockeCmd: SocketCmd.USER_LEAVE,
+							mid: mid;
+						},
+					};
+					self.channel.pushMessageByUids("onSocketMsg", param, otherUidList, {}, function (err) {
+						if (err) {
+							logger.error("mjRoom.leaveRoom 通知其他玩家有新玩家离开房间失败, err = ", err);
+						}
+					});
+				}
 			}
 
 			utils.invokeCallback(cb, null, {
@@ -170,7 +215,7 @@ pro.leaveRoom = function (mid, cb) {
 pro.userOffline = function (mid) {
 	var self = this;
 
-	if (self.roomData.state === Consts.ROOM.STATE.PLAYING) {
+	if (self.roomState === Consts.ROOM.STATE.PLAYING) {
 		//玩家在游戏中，修改该玩家的在线状态
 		var userData = self.userList[mid];
 		userData.online = 0;
@@ -185,12 +230,13 @@ pro.userOffline = function (mid) {
 pro.clearRoom = function () {
 	this.channelService.destroyChannel(this.roomData.roomNum);
 
+	this.roomConfig = null;
 	this.channel = null;
 	this.userList = {};
 	this.roomData = {};
 	this.gameData = {};
 	
-	this.roomState = Consts.ROOM.STATE.INITED;
+	this.roomState = Consts.ROOM.STATE.UN_INITED;
 };
 
 //房间是否已经初始化
@@ -210,15 +256,11 @@ pro.getRoomNumber = function () {
 
 //房间是否已满
 pro.isRoomFull = function () {
-	var playerNum = getPlayerNum.call(this);
-
-	return playerNum === this.maxPlayerNum;
+	return this.roomData.curPlayerNum === this.maxPlayerNum;
 }
 
 //玩家是否在房间中
 pro.isUserInRoom = function (mid) {
-	utils.printObj(this.userList);
-
 	if (this.userList[mid]) {
 		return true;
 	}
@@ -244,16 +286,11 @@ var getAvailableSeatID = function () {
 	}
 }
 
-var getPlayerNum = function () {
-	var playerNum = 0;
-	for (var mid in this.userList) {
-		if (this.userList[mid]) {
-			playerNum ++;
-		}
-	}
-
-	return playerNum;
-};
+//导出发送给客户端的roomData
+var exportRoomData = function () {
+	var data = {};
+	data.
+}
 /////////////////////////////////////功能函数end/////////////////////////////////////
 
 module.exports = Room;
