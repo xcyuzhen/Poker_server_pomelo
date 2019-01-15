@@ -167,7 +167,7 @@ pro.leaveRoom = function (mid, cb) {
 			var userData = self.userList[mid];
 
 			//删除座位mid映射数据
-			delete(self.seatMidMap[userData.seatID]);
+			delete(self.gameData.seatMidMap[userData.seatID]);
 
 			//删除该玩家数据
 			delete(self.userList[mid]);
