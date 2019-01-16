@@ -36,6 +36,7 @@ pro.initRoom = function (roomConfig) {
 	var roomNum = (level + serverFlag) * 100000 + this.roomIndex;
 
 	//初始化房间数据
+	this.roomData.level = level;
 	this.roomData.roomNum = roomNum;
 	this.roomData.maxPlayerNum = 3;
 	this.roomData.curPlayerNum = 0;
@@ -112,7 +113,7 @@ pro.enterRoom = function (mid) {
 						groupName: MjConsts.MSG_GROUP_NAME,
 						res: {
 							sockeCmd: SocketCmd.ENTER_ROOM,
-							roomData: self.roomData,
+							roomData: exportRoomData.call(self),
 							userList: clientUserList,
 						},
 					};
@@ -193,7 +194,7 @@ pro.leaveRoom = function (mid, cb) {
 						groupName: MjConsts.MSG_GROUP_NAME,
 						res: {
 							sockeCmd: SocketCmd.USER_LEAVE,
-							mid: mid;
+							mid: mid,
 						},
 					};
 					self.channel.pushMessageByUids("onSocketMsg", param, otherUidList, {}, function (err) {
@@ -289,6 +290,12 @@ var getAvailableSeatID = function () {
 //导出发送给客户端的roomData
 var exportRoomData = function () {
 	var data = {};
+
+	data.level = this.roomData.level;
+	data.roomNum = this.roomData.roomNum;
+	data.maxPlayerNum = this.roomData.maxPlayerNum;
+
+	return data;
 }
 /////////////////////////////////////功能函数end/////////////////////////////////////
 

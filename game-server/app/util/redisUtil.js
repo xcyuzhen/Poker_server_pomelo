@@ -262,17 +262,6 @@ redisUtil.logout = function (mid, cb) {
 /**
  * 玩家退出登录
  *
- * @param  {Number}   	mid 		玩家id
- * @param  {Function} 	cb 			回调
- * @return {Void}
- */
-redisUtil.enterRoom = function (mid, serverType, serverID, cb) {
-	redisUtil.setUserData({mid: mid, gameServerType: serverType, gameServerID: serverID, state: 2}, false, cb);
-};
-
-/**
- * 玩家退出登录
- *
  * @param  {Number}   	mid 			玩家id
  * @param  {String}   	serverType 		服务器类型
  * @param  {String}   	serverID 		服务器ID
