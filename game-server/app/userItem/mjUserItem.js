@@ -1,6 +1,6 @@
 var logger = require('pomelo-logger').getLogger(__filename);
 
-var UserData = function (data) {
+var UserItem = function (data) {
 	//玩家信息
 	this.mid = data.mid || 0;
 	this.nick = data.nick || "";
@@ -11,6 +11,7 @@ var UserData = function (data) {
 	this.seatID = data.seatID || 0,
 	this.ready = data.ready || 0,
 	this.online = data.online || 1,
+	this.robot = data.robot || 0,
 
 	//玩家牌局数据
 	this.handCards = []; 						//手牌列表
@@ -21,7 +22,7 @@ var UserData = function (data) {
 	this.tingList = []; 						//听牌列表
 };
 
-var pro = UserData.prototype;
+var pro = UserItem.prototype;
 
 //导出前端的userData
 pro.exportClientData = function () {
@@ -62,4 +63,4 @@ pro.exportClientGameData = function () {
 	return data;
 }
 
-module.exports = UserData;
+module.exports = UserItem;

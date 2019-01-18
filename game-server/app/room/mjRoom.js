@@ -6,7 +6,7 @@ var utils = require('../util/utils');
 var redisUtil = require("../util/redisUtil");
 var GameConfig = require('../models/gameConfig');
 var Code = require('../../../shared/code');
-var UserData = require('../userData/mjUserData');
+var UserItem = require('../userItem/mjUserItem');
 var SocketCmd = require('../models/socketCmd');
 
 var Room = function (app, opts) {
@@ -72,18 +72,18 @@ pro.enterRoom = function (mid) {
 					logger.error("mjRoom.enterRoom 获取用户数据失败，mid = ", mid);
 				} else {
 					console.log("获取玩家所有数据");
-					var userData = new UserData(userDataAll);
+					var userItem = new UserItem(userDataAll);
 
 					//初始化玩家的位置
-					userData.seatID = getAvailableSeatID.call(self);
+					userItem.seatID = getAvailableSeatID.call(self);
 
-					console.log("玩家座位号： ", userData.seatID);
+					console.log("玩家座位号： ", userItem.seatID);
 
 					//将玩家添加进玩家列表
-					self.userList[mid] = userData;
+					self.userList[mid] = userItem;
 
 					//将座位号添加到座位mid映射表中
-					self.gameData.seatMidMap[userData.seatID] = mid;
+					self.gameData.seatMidMap[userItem.seatID] = mid;
 
 					//将玩家添加进channel
 					self.channel.add(mid, userDataAll.sid);
@@ -130,7 +130,7 @@ pro.enterRoom = function (mid) {
 							groupName: MjConsts.MSG_GROUP_NAME,
 							res: {
 								sockeCmd: SocketCmd.USER_ENTER,
-								userData: userData.exportClientData(),
+								userData: userItem.exportClientData(),
 							},
 						};
 						self.channel.pushMessageByUids("onSocketMsg", param, otherUidList, {}, function (err) {
@@ -165,10 +165,10 @@ pro.leaveRoom = function (mid, cb) {
 		} else {
 			self.channel.leave(mid, resp[0]);
 
-			var userData = self.userList[mid];
+			var userItem = self.userList[mid];
 
 			//删除座位mid映射数据
-			delete(self.gameData.seatMidMap[userData.seatID]);
+			delete(self.gameData.seatMidMap[userItem.seatID]);
 
 			//删除该玩家数据
 			delete(self.userList[mid]);
@@ -218,8 +218,8 @@ pro.userOffline = function (mid) {
 
 	if (self.roomState === Consts.ROOM.STATE.PLAYING) {
 		//玩家在游戏中，修改该玩家的在线状态
-		var userData = self.userList[mid];
-		userData.online = 0;
+		var userItem = self.userList[mid];
+		userItem.online = 0;
 
 		//广播该玩家掉线的消息
 	} else {
@@ -276,8 +276,8 @@ var getAvailableSeatID = function () {
 
 	//将已经被占用的座位添加列表
 	for (var mid in this.userList) {
-		var userData = thi.userList[mid];
-		seatUse[userData.seatID] = true;
+		var userItem = thi.userList[mid];
+		seatUse[userItem.seatID] = true;
 	}
 
 	for (var i = 1; i <= this.roomData.maxPlayerNum; i++) {
