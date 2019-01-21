@@ -5,7 +5,6 @@ var consts = require('../consts/consts');
 var utils = require('../util/utils');
 
 var userDao = module.exports;
-var userInfoMap = {};
 
 //根据Udid获取用户信息
 userDao.getUserByUdid = function (udid, cb) {
@@ -57,19 +56,8 @@ userDao.createNewUser = function (udid, cb) {
 
 //根据mid获取用户信息
 userDao.getUserByMid = function (mid, cb){
-	//新检查redis中是否有用户信息
-	var key = mid + "_userInfo";
-	var userInfoStr = userInfoMap[key]
-	if (!!userInfoStr) {
-		var userData = JSON.parse(userInfoStr);
-		utils.invokeCallback(cb, null, userData);
-	} else {
-		//redis中没有玩家信息，从数据库中取
-		
-	}
-
-	var sql = 'select * from User where id = ?';
-	var args = [uid];
+	var sql = 'select * from user_info where mid = ?';
+	var args = [mid];
 	pomelo.app.get('dbclient').query(sql,args,function(err, res){
 		if(err !== null){
 			utils.invokeCallback(cb, err.message, null);

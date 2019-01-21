@@ -39,6 +39,9 @@ app.configure('production|development', "auth", function () {
 	app.loadConfig("mysql", app.getBase() + "./../shared/config/mysql.json");
     var dbclient = require("./app/dao/mysql/sqlPool.js").create();
     app.set("dbclient", dbclient);
+
+    var robotMgr = require('./app/components/robotMgr');
+	app.load(robotMgr);
 });
 
 app.configure('production|development', "auth|connector|ddz|mj", function () {

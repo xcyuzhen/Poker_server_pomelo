@@ -6,7 +6,7 @@ var utils = require('../util/utils');
 var redisUtil = require("../util/redisUtil");
 var GameConfig = require('../models/gameConfig');
 var Code = require('../../../shared/code');
-var UserItem = require('../userItem/mjUserItem');
+var UserItem = require('../domain/mjUserItem');
 var SocketCmd = require('../models/socketCmd');
 
 var Room = function (app, opts) {
