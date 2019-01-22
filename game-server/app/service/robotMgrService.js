@@ -39,36 +39,7 @@ pro.afterStart = function (cb) {
 	//机器人初始化回调
 	var initRobotsCB;
 	initRobotsCB = function () {
-		robotDao.getRobots(5, 1, function (err, res) {
-			if (!err) {
-				if (res.length === 0) {
-					logger.info("数据库中没有机器人，创建机器人");
-
-					//数据库中没有机器人，生成
-					robotDao.createRobots(function (err) {
-						if (!err) {
-							logger.info("数据库创建机器人成功");
-							initRobotsCB();
-						}
-					});
-				} else {
-					logger.info("读取到机器人数据，写入redis并且记录信息");
-
-					//数据库中有机器人，保存在redis中
-					for (var i = 0; i < res.length; i++) {
-						var robotData = res[i];
-						redisUtil.setUserData(robotData, true)
-
-						var robotItem = {
-							id: robotData.id,
-							mid: robotData.mid,
-							inUse: 0,
-						};
-						self.robotsList.push(robotItem);
-					}
-				}
-			}
-		});
+		
 	}
 	initRobotsCB();
 
@@ -90,4 +61,66 @@ pro.stop = function (cb) {
 	self.robotsList = [];
 
 	process.nextTick(cb);	
+};
+
+pro.getMoreRobotsFromDB = function () {
+	var self = this;
+
+	var curNum = self.robotsList.length;
+	robotDao.getRobots(5, (curNum + 1), function (err, res) {
+		if (!err) {
+			if (res.length === 0) {
+				logger.info("数据库中没有机器人，创建机器人");
+
+				//数据库中没有机器人，生成
+				robotDao.createRobots(function (err) {
+					if (!err) {
+						logger.info("数据库创建机器人成功");
+						initRobotsCB();
+					}
+				});
+			} else {
+				logger.info("读取到机器人数据，写入redis并且记录信息");
+
+				//数据库中有机器人，保存在redis中
+				for (var i = 0; i < res.length; i++) {
+					var robotData = res[i];
+					redisUtil.setUserData(robotData, true)
+
+					var robotItem = {
+						id: robotData.id,
+						mid: robotData.mid,
+						gold: robotData.gold,
+						diamond: robotDao.diamond,
+						inUse: 0,
+					};
+					self.robotsList.push(robotItem);
+				}
+			}
+		}
+	});
+};
+
+//请求一个机器人
+pro.reqOneRobot = function (param cb) {
+	var self = this;
+
+	var minGold = param.minGold || 0;
+	var maxGold = param.maxGold || 99999999;
+
+	var resultMid;
+	for (var i = self.robotsList.length - 1; i >= 0; i--) {
+		var robotItem = self.robotsList[i];
+		var gold = robotItem.gold;
+		if (robotItem.inUse === 0 && gold >= minGold && gold <= maxGold) {
+			resultMid = robotItem.mid;
+			break;
+		}
+	}
+
+	if (resultMid) {
+		//找到了可用的机器人
+	} else {
+		//没有了可用的机器人
+	}
 };

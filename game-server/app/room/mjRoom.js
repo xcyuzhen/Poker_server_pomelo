@@ -21,6 +21,9 @@ var Room = function (app, opts) {
 	this.gameData = {}; 							//游戏数据
 	this.channel = null; 							//channel
 	this.roomConfig = null; 						//房间配置
+
+	this.timeoutID = null; 							//房间延时ID
+	this.intervalID = null; 						//循环计时ID
 };
 
 var pro = Room.prototype;
@@ -99,7 +102,7 @@ pro.enterRoom = function (mid) {
 						clientUserList[tMid] = tUserData.exportClientData();
 
 						if (tMid !== mid) {
-							otherUidList.push({uid: tMid, sid: self.channel.getMember(tMid)['sid']});
+							otherUidList.push(self.channel.getMember(tMid));
 						}
 
 						curPlayerNum++;
@@ -117,7 +120,7 @@ pro.enterRoom = function (mid) {
 							userList: clientUserList,
 						},
 					};
-					var uidList = [{uid: mid, sid: self.channel.getMember(mid)['sid']}]
+					var uidList = [self.channel.getMember(mid)]
 					self.channelService.pushMessageByUids("onSocketMsg", param, uidList, {}, function (err) {
 						if (err) {
 							logger.error("mjRoom.enterRoom 返回玩家进入房间失败, err = ", err);
@@ -138,6 +141,14 @@ pro.enterRoom = function (mid) {
 								logger.error("mjRoom.enterRoom 通知其他玩家有新玩家加入失败, err = ", err);
 							}
 						});
+					}
+
+					//判断房间是否已满
+					var isFull = self.isRoomFull();
+					if (isFull) {
+
+					} else {
+
 					}
 				}
 			});
@@ -185,7 +196,7 @@ pro.leaveRoom = function (mid, cb) {
 			} else {
 				var otherUidList = [];
 				for (var tMid in self.userList) {
-					otherUidList.push({uid: tMid, sid: self.channel.getMember(tMid)['sid']});
+					otherUidList.push(self.channel.getMember(tMid));
 				}
 
 				//通知其他人该玩家离开
@@ -229,14 +240,21 @@ pro.userOffline = function (mid) {
 
 //清空房间
 pro.clearRoom = function () {
+	//清理计时器
+	this.clearTimeoutTimer();
+	this.clearIntervalTimer();
+
+	//销毁channel
 	this.channelService.destroyChannel(this.roomData.roomNum);
 
+	//清空数据
 	this.roomConfig = null;
 	this.channel = null;
 	this.userList = {};
 	this.roomData = {};
 	this.gameData = {};
 	
+	//还原房间状态
 	this.roomState = Consts.ROOM.STATE.UN_INITED;
 };
 
@@ -258,7 +276,7 @@ pro.getRoomNumber = function () {
 //房间是否已满
 pro.isRoomFull = function () {
 	return this.roomData.curPlayerNum === this.maxPlayerNum;
-}
+};
 
 //玩家是否在房间中
 pro.isUserInRoom = function (mid) {
@@ -267,6 +285,35 @@ pro.isUserInRoom = function (mid) {
 	}
 
 	return false;
+};
+
+//开始请求机器人定时器
+pro.startReqRobotTimer = function () {
+	var self = this;
+
+	self.clearTimeoutTimer();
+
+	logger.info("开启timeout定时器，请求机器人进入房间");
+	self.timeoutID = setTimeout(function () {
+		logger.info("rpc调用请求机器人");
+		// self.app.rpc.auth.authRemote.login(
+	}, MjConsts.OPE_TIME.ReqRobotTime);
+};
+
+pro.clearTimeoutTimer = function () {
+	if (this.timeoutID) {
+		logger.info("清除已有timeout定时器");
+		clearTimeout(this.timeoutID);
+		this.timeoutID = null;
+	}
+};
+
+pro.clearIntervalTimer = function () {
+	if (this.intervalID) {
+		logger.info("清除已有interval定时器");
+		clearInterval(this.intervalID);
+		this.intervalID = null;
+	}
 };
 
 /////////////////////////////////////功能函数begin/////////////////////////////////////

@@ -16,4 +16,23 @@ module.exports = {
 		BU_GANG: 4,
 		HU: 5,
 	},
+
+	//操作时间
+	OPE_TIME: {
+		ReqRobotTime: 3, 														//玩家进入离开房间请求机器人的延时
+
+	},
+
+	//机器人配置
+	ROBOT: {
+		AutoReadyTime: { 														//自动准备时间
+			Min: 1,
+			Max: 3,
+		},
+
+		AutoOutCardTime: { 														//自动出牌时间
+			Min: 1,
+			Max: 5,
+		},
+	},
 };
