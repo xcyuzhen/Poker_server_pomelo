@@ -19,7 +19,7 @@ module.exports = {
 
 	//操作时间
 	OPE_TIME: {
-		ReqRobotTime: 3, 														//玩家进入离开房间请求机器人的延时
+		ReqRobotTime: 3000,														//玩家进入离开房间请求机器人的延时
 
 	},
 

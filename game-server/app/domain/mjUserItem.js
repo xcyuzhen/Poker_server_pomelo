@@ -1,6 +1,10 @@
 var logger = require('pomelo-logger').getLogger(__filename);
+var SocketCmd = require('../models/socketCmd');
+var utils = require('../util/utils');
 
-var UserItem = function (data) {
+var UserItem = function (room, data) {
+	this.room = room;
+
 	//玩家信息
 	this.mid = data.mid || 0;
 	this.nick = data.nick || "";
@@ -20,6 +24,10 @@ var UserItem = function (data) {
 	this.extraCards = []; 						//吃碰杠牌的列表
 	this.handCardsNum = 0; 						//手牌张数
 	this.tingList = []; 						//听牌列表
+
+	this.timeoutID = null; 						//延时定时器
+	this.intervalID = null; 					//循环计时ID
+	this.leaveRoomTimeoutID = null; 			//离开房间延时定时器
 };
 
 var pro = UserItem.prototype;
@@ -62,5 +70,63 @@ pro.exportClientGameData = function () {
 
 	return data;
 }
+
+//机器人接收到的推送消息
+pro.onSocketMsg = function (param) {
+	var self = this;
+
+	var res = param.res;
+	var socketCmd = res.socketCmd;
+
+	console.log("AAAAAAAAAAAAAAAAA ");
+	utils.printObj(param);
+
+	switch (socketCmd) {
+		case SocketCmd.USER_ENTER:
+			break;
+		case SocketCmd.USER_LEAVE:
+			var realPlayerNum = self.room.getRealUserNum();
+			if (realPlayerNum === 0) {
+				if (!self.leaveRoomTimeoutID) {
+					var delayTime = utils.randomNum(1, 3);
+
+					self.leaveRoomTimeoutID = setTimeout(delayTime, function () {
+						self.room.leaveRoom();
+					});
+				}
+			}
+
+			break;
+		default:
+	}
+};
+
+pro.clearTimeoutTimer = function () {
+	if (this.timeoutID) {
+		clearTimeout(this.timeoutID);
+		this.timeoutID = null;
+	}
+};
+
+pro.clearIntervalTimer = function () {
+	if (this.intervalID) {
+		clearInterval(this.intervalID);
+		this.intervalID = null;
+	}
+};
+
+pro.clearLeaveRoomTimeoutTimer = function () {
+	if (this.leaveRoomTimeoutID) {
+		clearTimeout(this.leaveRoomTimeoutID);
+		this.leaveRoomTimeoutID = null;
+	}
+};
+
+//清理工作
+pro.clean = function () {
+	this.clearTimeoutTimer();
+	this.clearIntervalTimer();
+	this.clearLeaveRoomTimeoutTimer();
+};
 
 module.exports = UserItem;

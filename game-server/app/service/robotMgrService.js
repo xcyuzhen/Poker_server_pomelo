@@ -1,10 +1,6 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var utils = require('../util/utils');
 var redisUtil = require("../util/redisUtil");
-var Consts = require('../consts/consts');
-var SocketCmd = require('../models/socketCmd');
-var async = require('async');
-var Code = require('../../../shared/code');
 var robotDao = require('../dao/robotDao');
 
 /**
@@ -37,11 +33,7 @@ pro.afterStart = function (cb) {
 	logger.info("初始化机器人");
 
 	//机器人初始化回调
-	var initRobotsCB;
-	initRobotsCB = function () {
-		
-	}
-	initRobotsCB();
+	self.getMoreRobotsFromDB();
 
 	process.nextTick(cb);	
 };
@@ -63,22 +55,29 @@ pro.stop = function (cb) {
 	process.nextTick(cb);	
 };
 
-pro.getMoreRobotsFromDB = function () {
+pro.getMoreRobotsFromDB = function (cb) {
 	var self = this;
 
 	var curNum = self.robotsList.length;
 	robotDao.getRobots(5, (curNum + 1), function (err, res) {
 		if (!err) {
 			if (res.length === 0) {
-				logger.info("数据库中没有机器人，创建机器人");
+				if (curNum === 0) {
+					logger.info("数据库中没有机器人，根据配置将机器人写入数据库");
 
-				//数据库中没有机器人，生成
-				robotDao.createRobots(function (err) {
-					if (!err) {
-						logger.info("数据库创建机器人成功");
-						initRobotsCB();
-					}
-				});
+					//数据库中没有机器人，生成
+					robotDao.createRobots(function (err) {
+						if (!err) {
+							logger.info("数据库创建机器人成功");
+							self.getMoreRobotsFromDB(function (err) {
+								utils.invokeCallback(cb, err);
+							});
+						}
+					});
+				} else {
+					logger.info("没有更多机器人了");
+					utils.invokeCallback(cb, err, res);
+				}
 			} else {
 				logger.info("读取到机器人数据，写入redis并且记录信息");
 
@@ -96,13 +95,19 @@ pro.getMoreRobotsFromDB = function () {
 					};
 					self.robotsList.push(robotItem);
 				}
+
+				utils.invokeCallback(cb, null, res);
 			}
+		} else {
+			logger.error("从数据库读取更多机器人失败 startIndex = " + (curNum + 1) + ", err = " + err);
+
+			utils.invokeCallback(cb, err);
 		}
 	});
 };
 
 //请求一个机器人
-pro.reqOneRobot = function (param cb) {
+pro.reqOneRobot = function (param, cb) {
 	var self = this;
 
 	var minGold = param.minGold || 0;
@@ -113,6 +118,7 @@ pro.reqOneRobot = function (param cb) {
 		var robotItem = self.robotsList[i];
 		var gold = robotItem.gold;
 		if (robotItem.inUse === 0 && gold >= minGold && gold <= maxGold) {
+			robotItem.inUse = 1;
 			resultMid = robotItem.mid;
 			break;
 		}
@@ -120,7 +126,43 @@ pro.reqOneRobot = function (param cb) {
 
 	if (resultMid) {
 		//找到了可用的机器人
+		logger.info("找到了可用的机器人");
+
+		utils.invokeCallback(cb, null, resultMid);
 	} else {
 		//没有了可用的机器人
+		logger.info("当前没有可用机器人，去数据库加载更多");
+		self.getMoreRobotsFromDB(function (err, resp) {
+			if (!err) {
+				if (resp.length === 0) {
+					logger.info("全部搜索完毕，没有更多机器人");
+					utils.invokeCallback(cb, null, null);
+				} else {
+					self.reqOneRobot(param, cb)
+				}
+			}
+		});
 	}
 };
+
+//归还一个机器人
+pro.returnOneRobot = function (mid, cb) {
+	for (var i = self.robotsList.length - 1; i >= 0; i--) {
+		var robotItem = self.robotsList[i];
+		if (robotItem.mid === mid) {
+			//还原标记位
+			robotItem.inUse = 0;
+
+			//设置金币数
+			redisUtil.getUserDataByField(mid, ["gold"], function (err, resp) {
+				if (!err) {
+					robotItem.gold = parseInt(resp[0]);
+				}
+
+				utils.invokeCallback(cb, err);
+			});
+
+			break;
+		}
+	}
+}
