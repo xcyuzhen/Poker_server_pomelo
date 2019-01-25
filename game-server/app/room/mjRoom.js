@@ -60,7 +60,7 @@ pro.initRoom = function (roomConfig) {
 
 //玩家进入房间
 pro.enterRoom = function (mid, isRobot) {
-	console.log("玩家进入房间 mid = ", mid);
+	console.log("玩家进入房间 mid = ");
 	var self = this;
 
 	//清除timer
@@ -148,8 +148,8 @@ pro.enterRoom = function (mid, isRobot) {
 						var param = {
 							groupName: MjConsts.MSG_GROUP_NAME,
 							res: {
-								socketCmd: SocketCmd.USER_ENTER,
-								userData: userItem.exportClientData(),
+								socketCmd: SocketCmd.UPDATE_USER_LIST,
+								userList: clientUserList,
 							},
 						};
 						self.pushMessageByUids(otherMidList, param);
@@ -209,6 +209,8 @@ pro.leaveRoom = function (mid, cb) {
 
 			//删除该玩家数据
 			delete(self.userList[mid]);
+
+			//修改redis中的数据
 			redisUtil.leaveRoom(mid);
 
 			//记录当前玩家人数
@@ -217,6 +219,11 @@ pro.leaveRoom = function (mid, cb) {
 			//记录真实玩家人数
 			if (!isRobot) {
 				self.roomData.realPlayerNum--;
+			}
+
+			//通知robotMgr回收机器人
+			if (isRobot) {
+				self.app.rpc.auth.robotRemote.returnOneRobot({}, mid, null);
 			}
 
 			//如果该房间所有玩家都已经离开，回收该房间
@@ -232,14 +239,26 @@ pro.leaveRoom = function (mid, cb) {
 
 				//通知其他人该玩家离开
 				if (otherMidList.length > 0) {
+					//组装发给客户端的userList
+					var clientUserList = {};
+					for (var tMid in self.userList) {
+						var tUserItem = self.userList[tMid];
+						clientUserList[tMid] = tUserItem.exportClientData();
+					}
+
 					var param = {
 						groupName: MjConsts.MSG_GROUP_NAME,
 						res: {
-							socketCmd: SocketCmd.USER_LEAVE,
-							mid: mid,
+							socketCmd: SocketCmd.UPDATE_USER_LIST,
+							userList: clientUserList,
 						},
 					};
 					self.pushMessageByUids(otherMidList, param);
+				}
+
+				//如果还有真实玩家，启动请求机器人定时器
+				if (self.roomData.realPlayerNum > 0) {
+					self.startReqRobotTimer();
 				}
 			}
 
@@ -381,9 +400,6 @@ pro.startReqRobotTimer = function () {
 			minGold: self.roomConfig.limitMin,
 			maxGold: self.roomConfig.limitMax,
 		};
-
-		logger.info("rpc调用请求机器人");
-		logger.info(JSON.stringify(param));
 
 		self.app.rpc.auth.robotRemote.reqOneRobot({}, param, function (err, resp) {
 			if (err) {

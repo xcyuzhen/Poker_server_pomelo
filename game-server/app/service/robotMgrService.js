@@ -147,22 +147,31 @@ pro.reqOneRobot = function (param, cb) {
 
 //归还一个机器人
 pro.returnOneRobot = function (mid, cb) {
+	var self = this;
+	var robot;
+
 	for (var i = self.robotsList.length - 1; i >= 0; i--) {
 		var robotItem = self.robotsList[i];
 		if (robotItem.mid === mid) {
-			//还原标记位
-			robotItem.inUse = 0;
-
-			//设置金币数
-			redisUtil.getUserDataByField(mid, ["gold"], function (err, resp) {
-				if (!err) {
-					robotItem.gold = parseInt(resp[0]);
-				}
-
-				utils.invokeCallback(cb, err);
-			});
-
+			robot = robotItem;
 			break;
 		}
+	}
+
+	if (robot) {
+		//还原标记位
+		robot.inUse = 0;
+
+		//设置金币数
+		redisUtil.getUserDataByField(mid, ["gold"], function (err, resp) {
+			if (!err) {
+				robot.gold = parseInt(resp[0]);
+			}
+
+			utils.invokeCallback(cb, err);
+		});
+	} else {
+		logger.error('没有找到该机器人, mid = ' + mid);
+		utils.invokeCallback(cb, null);
 	}
 }

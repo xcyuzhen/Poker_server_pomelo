@@ -6,4 +6,5 @@ module.exports = {
 	ENTER_ROOM: 0x20100, 							//进入房间
 	USER_ENTER: 0x20101, 							//有玩家进入
 	USER_LEAVE: 0x20102, 							//玩家离开房间
+	UPDATE_USER_LIST: 0x20103, 						//刷新玩家列表
 }

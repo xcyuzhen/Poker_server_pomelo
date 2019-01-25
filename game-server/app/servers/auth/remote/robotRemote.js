@@ -12,7 +12,7 @@ var Remote = function(app) {
 var pro = Remote.prototype;
 
 /**
- * 用户登录
+ * 请求一个机器人
  *
  * @param  {Object}   	param 参数对象
  * @param  {Function} 	cb 回调函数
@@ -23,5 +23,20 @@ pro.reqOneRobot = function(param, cb) {
 
 	self.robotMgrService.reqOneRobot(param, function (err, resp) {
 		utils.invokeCallback(cb, err, resp);
+	});
+};
+
+/**
+ * 归还一个机器人
+ *
+ * @param  {Number}   	mid 机器人mid
+ * @param  {Function} 	cb 回调函数
+ * @return {Void}
+ */
+pro.returnOneRobot = function(mid, cb) {
+	var self = this;
+
+	self.robotMgrService.returnOneRobot(mid, function (err) {
+		utils.invokeCallback(cb, err);
 	});
 };

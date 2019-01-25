@@ -6,16 +6,16 @@ var UserItem = function (room, data) {
 	this.room = room;
 
 	//玩家信息
-	this.mid = data.mid || 0;
+	this.mid = parseInt(data.mid) || 0;
 	this.nick = data.nick || "";
-	this.sex = data.sex || 0,
-	this.gold = data.gold || 0,
-	this.diamond = data.diamond || 0,
+	this.sex = parseInt(data.sex) || 0,
+	this.gold = parseInt(data.gold) || 0,
+	this.diamond = parseInt(data.diamond) || 0,
 	this.head_url = data.head_url || "",
-	this.seatID = data.seatID || 0,
-	this.ready = data.ready || 0,
-	this.online = data.online || 1,
-	this.robot = data.robot || 0,
+	this.seatID = parseInt(data.seatID) || 0,
+	this.ready = parseInt(data.ready) || 0,
+	this.online = parseInt(data.online) || 1,
+	this.robot = parseInt(data.robot) || 0,
 
 	//玩家牌局数据
 	this.handCards = []; 						//手牌列表
@@ -79,9 +79,7 @@ pro.onSocketMsg = function (param) {
 	var socketCmd = res.socketCmd;
 
 	switch (socketCmd) {
-		case SocketCmd.USER_ENTER:
-			break;
-		case SocketCmd.USER_LEAVE:
+		case SocketCmd.UPDATE_USER_LIST:
 			var realPlayerNum = self.room.getRealUserNum();
 			if (realPlayerNum === 0) {
 				if (!self.leaveRoomTimeoutID) {
