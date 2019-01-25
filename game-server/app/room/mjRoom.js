@@ -269,8 +269,9 @@ pro.leaveRoom = function (mid, cb) {
 	});
 };
 
+//玩家准备
 pro.userReady = function (mid) {
-
+	
 };
 
 //玩家掉线

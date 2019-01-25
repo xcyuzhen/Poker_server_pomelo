@@ -210,9 +210,24 @@ var userLeave = function (mid, msg, cb) {
 	}
 };
 
+//请求准备
+var userReady = function (mid, msg, cb) {
+	var self = this;
+
+	console.log("玩家" + mid + "，申请离开房间");
+	//找到玩家所在房间，离开房间操作在房间内完成
+	var room = getRoomByMid.call(self, mid);
+	if (!!room) {
+		room.userReady(mid);
+	}
+
+	utils.invokeCallback(cb, null);
+};
+
 var socketCmdConfig = {
 	[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 	[SocketCmd.USER_LEAVE]: userLeave,
+	[SocketCmd.USER_READY]: userReady,
 };
 
 /////////////////////////////////////协议处理相关end/////////////////////////////////////
