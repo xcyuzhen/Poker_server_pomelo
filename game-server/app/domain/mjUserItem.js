@@ -78,9 +78,6 @@ pro.onSocketMsg = function (param) {
 	var res = param.res;
 	var socketCmd = res.socketCmd;
 
-	console.log("AAAAAAAAAAAAAAAAA ");
-	utils.printObj(param);
-
 	switch (socketCmd) {
 		case SocketCmd.USER_ENTER:
 			break;
@@ -90,9 +87,9 @@ pro.onSocketMsg = function (param) {
 				if (!self.leaveRoomTimeoutID) {
 					var delayTime = utils.randomNum(1, 3);
 
-					self.leaveRoomTimeoutID = setTimeout(delayTime, function () {
-						self.room.leaveRoom();
-					});
+					self.leaveRoomTimeoutID = setTimeout(function () {
+						self.room.leaveRoom(self.mid);
+					}, delayTime);
 				}
 			}
 

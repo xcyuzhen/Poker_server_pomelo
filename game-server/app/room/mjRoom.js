@@ -135,7 +135,7 @@ pro.enterRoom = function (mid, isRobot) {
 					var param = {
 						groupName: MjConsts.MSG_GROUP_NAME,
 						res: {
-							sockeCmd: SocketCmd.ENTER_ROOM,
+							socketCmd: SocketCmd.ENTER_ROOM,
 							roomData: self.exportRoomData(),
 							userList: clientUserList,
 						},
@@ -148,7 +148,7 @@ pro.enterRoom = function (mid, isRobot) {
 						var param = {
 							groupName: MjConsts.MSG_GROUP_NAME,
 							res: {
-								sockeCmd: SocketCmd.USER_ENTER,
+								socketCmd: SocketCmd.USER_ENTER,
 								userData: userItem.exportClientData(),
 							},
 						};
@@ -235,7 +235,7 @@ pro.leaveRoom = function (mid, cb) {
 					var param = {
 						groupName: MjConsts.MSG_GROUP_NAME,
 						res: {
-							sockeCmd: SocketCmd.USER_LEAVE,
+							socketCmd: SocketCmd.USER_LEAVE,
 							mid: mid,
 						},
 					};
