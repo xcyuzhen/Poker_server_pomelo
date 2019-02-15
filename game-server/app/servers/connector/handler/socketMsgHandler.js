@@ -23,8 +23,8 @@ handler.socketMsg = function(msg, session, next) {
 		self.initSocketCmdConfig();
 	}
 
-	logger.info("收到客户端发送的消息, ");
-	utils.printObj();
+	logger.info("收到客户端发送的消息");
+	utils.printObj(msg);
 
 	var msgSocketCmd = msg.socketCmd;
 	var processerFun = self.socketCmdConfig[msgSocketCmd];
@@ -122,6 +122,7 @@ var commonRoomMsg = function (msg, session, next) {
 
 				//转发消息
 				self.app.rpc[resp[0]].roomRemote.socketMsg.toServer(resp[1], mid, msg, function (err) {
+					console.log("请求处理完成返回, cmd = ", msg.socketCmd);
 					next(err, {code: Code.OK});
 				});
 			} else {

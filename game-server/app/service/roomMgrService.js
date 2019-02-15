@@ -108,16 +108,28 @@ pro.socketMsg = function (mid, msg, cb) {
 
 	var msgSocketCmd = msg.socketCmd;
 	var processerFun = socketCmdConfig[msgSocketCmd];
-	if (!! processerFun) {
-		processerFun.call(self, mid, msg, cb);
+	if (!! processerFun && self[processerFun]) {
+		self[processerFun](mid, msg, cb);
 	} else {
-		logger.error('没有找到处理函数, cmd = ' + msgSocketCmd);
-		utils.invokeCallback(cb, {message: "没有找到处理函数"});
+		//通用处理
+		self.commonRoomMsgHandler(mid, msg, cb);
+	}
+};
+
+//通用房间消息处理函数
+pro.commonRoomMsgHandler = function (mid, msg, cb) {
+	var self = this;
+
+	var room = getRoomByMid.call(self, mid);
+	if (!!room) {
+		room.commonRoomMsgHandler(mid, msg, cb);
+	} else {
+		utils.invokeCallback(cb, null);
 	}
 };
 
 //请求加入场次
-var enterGroupLevel = function (mid, msg, cb) {
+pro.enterGroupLevel = function (mid, msg, cb) {
 	console.log("玩家请求进入房间 mid = ", mid);
 	var self = this;
 	var level = msg.level;
@@ -193,7 +205,7 @@ var enterGroupLevel = function (mid, msg, cb) {
 };
 
 //请求退出房间
-var userLeave = function (mid, msg, cb) {
+pro.userLeave = function (mid, msg, cb) {
 	var self = this;
 
 	console.log("玩家" + mid + "，申请离开房间");
@@ -210,24 +222,9 @@ var userLeave = function (mid, msg, cb) {
 	}
 };
 
-//请求准备
-var userReady = function (mid, msg, cb) {
-	var self = this;
-
-	console.log("玩家" + mid + "，申请离开房间");
-	//找到玩家所在房间，离开房间操作在房间内完成
-	var room = getRoomByMid.call(self, mid);
-	if (!!room) {
-		room.userReady(mid);
-	}
-
-	utils.invokeCallback(cb, null);
-};
-
 var socketCmdConfig = {
-	[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
-	[SocketCmd.USER_LEAVE]: userLeave,
-	[SocketCmd.USER_READY]: userReady,
+	[SocketCmd.ENTER_GROUP_LEVEL]: "enterGroupLevel",
+	[SocketCmd.USER_LEAVE]: "userLeave",
 };
 
 /////////////////////////////////////协议处理相关end/////////////////////////////////////
