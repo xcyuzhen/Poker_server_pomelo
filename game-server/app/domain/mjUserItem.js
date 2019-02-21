@@ -58,7 +58,7 @@ pro.exportClientData = function () {
 };
 
 //导出前端玩家座位信息
-pro.exportClientGameData = function () {
+pro.exportClientRoomData = function () {
 	var data = {};
 
 	//玩家座位信息
@@ -76,11 +76,18 @@ pro.exportClientGameData = function () {
 };
 
 //导出前端的gameData
-pro.exportClientGameData = function () {
+pro.exportClientGameData = function (mid) {
 	var data = {};
 
 	//玩家牌局数据
-	data.handCards = this.handCards;
+	if (mid == this.mid) {
+		data.handCards = this.handCards.concat();
+	} else {
+		data.handCards = [];
+	}
+	data.mid = this.mid;
+	data.gold = this.gold;
+	data.diamond = this.diamond;
 	data.outCards = this.outCards;
 	data.extraCards = this.extraCards;
 	data.handCardsNum = this.handCardsNum;
@@ -100,7 +107,7 @@ pro.onSocketMsg = function (param) {
 		case SocketCmd.UPDATE_USER_LIST:
 			//如果没有了真实玩家，延时离开房间
 			var realPlayerNum = self.room.getRealUserNum();
-			if (realPlayerNum === 0) {
+			if (realPlayerNum == 0) {
 				if (!self.leaveRoomTimeoutID) {
 					var delayTime = utils.randomNum(100, 300);
 
@@ -121,7 +128,7 @@ pro.onSocketMsg = function (param) {
 			break;
 		case SocketCmd.WAIT_USER_READY:
 			self.clearTimeoutTimer();
-			if (self.ready === 0) {
+			if (self.ready == 0) {
 				var delayTime = utils.randomNum(100, 200);
 				self.timeoutID = setTimeout(function () {
 					self.room.userReady(self.mid);

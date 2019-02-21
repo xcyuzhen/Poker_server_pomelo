@@ -17,6 +17,7 @@ var Room = function (app, opts) {
 	this.roomIndex = opts.roomIndex || 0;
 	this.roomState = Consts.ROOM.STATE.UN_INITED;					//当前房间状态
 	this.userList = {}; 											//玩家列表
+	this.seatMidMap = {}; 											//座位号和mid的映射表
 	this.channel = null; 											//channel
 	this.roomConfig = null; 										//房间配置
 
@@ -44,10 +45,16 @@ pro.initRoom = function (roomConfig) {
 	this.realPlayerNum = 0;
 
 	//初始化牌局数据
-	this.cardList = []; 					//牌列表
-	this.curTurnSeatID = 0; 				//当前摸牌打牌操作座位号
-	this.leftTime = 0; 						//当前操作倒计时
-	this.seatMidMap = {}; 					//座位号和mid的映射表
+	this.cardList = []; 											//牌列表
+	this.zhuangSeatID = 0; 											//庄家座位号
+	this.zhuangMid = 0; 											//庄家mid
+	this.curTurnSeatID = 0; 										//当前摸牌打牌操作座位号
+	this.leftTime = 0; 												//当前操作倒计时
+	this.gameState = MjConsts.GAME_STATE.INIT; 						//当前游戏状态
+	this.curOpeMid = 0; 											//当前可操作人mid
+	this.curOpeList = {}; 											//当前可操作列表
+	this.lastOpeMid = 0; 											//上次操作人mid
+	this.lastOpeObj = {}; 											//上次操作对象
 
 	//初始化channel
 	this.channel = this.channelService.getChannel(roomNum, true);
@@ -93,7 +100,7 @@ pro.pushMessageByUids = function (midList, param) {
 		var mid = midList[i];
 		var userItem = self.userList[mid];
 
-		if (userItem.robot === 0) {
+		if (userItem.robot == 0) {
 			realUserMemList.push(self.channel.getMember(mid));
 		} else {
 			userItem.onSocketMsg(param);
@@ -133,6 +140,37 @@ pro.updateUserSeatList = function () {
 		},
 	};
 	self.broadCastMsg(param);
+};
+
+//发送回合消息
+pro.sendRoundInfo = function () {
+	var self = this;
+
+	//给每个玩家发送回合消息，每个玩家只能看到自己的手牌
+	for (var tMid in self.userList) {
+		var gameUserList = {};
+		for (var gMid in self.userList) {
+			var tUserItem = self.userList[gMid];
+			gameUserList[gMid] = tUserItem.exportClientGameData(tMid);
+		}
+
+		var param = {
+			groupName: MjConsts.MSG_GROUP_NAME,
+			res: {
+				socketCmd: SocketCmd.ROUND_INFO,
+				roomState: self.roomState,
+				gameState: self.gameState,
+				leftTime: self.leftTime,
+				curOpeMid: self.curOpeMid,
+				curOpeList: self.curOpeList,
+				lastOpeMid: self.lastOpeMid,
+				lastOpeObj: self.lastOpeObj,
+				userList: gameUserList,
+			},
+		};
+
+		self.pushMessageByUids([tMid], param);
+	}
 };
 
 /////////////////////////////////////对外接口begin/////////////////////////////////////
@@ -198,7 +236,7 @@ pro.enterRoom = function (mid, isRobot) {
 
 						curPlayerNum++;
 
-						if (tUserItem.robot === 0) {
+						if (tUserItem.robot == 0) {
 							realPlayerNum++;
 						}
 					}
@@ -260,7 +298,7 @@ pro.leaveRoom = function (mid, cb) {
 		return;
 	}
 
-	// if (self.roomState === Consts.ROOM.STATE.PLAYING) {
+	// if (self.roomState == Consts.ROOM.STATE.PLAYING) {
 	// 	utils.invokeCallback(cb, null, {
 	// 		code: Code.ROOM.GAME_PLAYING,
 	// 		msg: "牌局进行中无法退出房间",
@@ -274,7 +312,7 @@ pro.leaveRoom = function (mid, cb) {
 		} else {
 			self.roomState = Consts.ROOM.STATE.INITED;
 
-			var isRobot = userItem.robot === 1;
+			var isRobot = userItem.robot == 1;
 
 			if (!isRobot) {
 				//将该玩家从channel中踢出
@@ -308,7 +346,7 @@ pro.leaveRoom = function (mid, cb) {
 
 			//如果该房间所有玩家都已经离开，回收该房间
 			console.log("房间剩余人数 playerNum = ", self.curPlayerNum);
-			if (self.curPlayerNum === 0) {
+			if (self.curPlayerNum == 0) {
 				self.clearRoom();
 				self.roomMgrService.recycleRoom(self.roomIndex);
 			} else {
@@ -343,7 +381,7 @@ pro.userOnline = function (mid) {
 pro.userOffline = function (mid) {
 	var self = this;
 
-	// if (self.roomState === Consts.ROOM.STATE.PLAYING) {
+	// if (self.roomState == Consts.ROOM.STATE.PLAYING) {
 	// 	//玩家在游戏中，修改该玩家的在线状态
 	// 	var userItem = self.userList[mid];
 	// 	userItem.online = 0;
@@ -372,7 +410,7 @@ pro.getRoomNumber = function () {
 
 //房间是否已满
 pro.isRoomFull = function () {
-	return this.curPlayerNum === this.maxPlayerNum;
+	return this.curPlayerNum == this.maxPlayerNum;
 };
 
 //玩家是否在房间中
@@ -410,7 +448,7 @@ pro.userReady = function (mid, msg, cb) {
 	var allReady = true;
 	for (var tMid in self.userList) {
 		var userItem = self.userList[tMid];
-		if (userItem.ready === 0) {
+		if (userItem.ready == 0) {
 			allReady = false;
 			break;
 		}
@@ -428,7 +466,7 @@ pro.waitToStart = function () {
 	var self = this;
 	logger.info("全部玩家到齐，开始进入准备流程");
 	self.roomState = Consts.ROOM.STATE.WAIT_TO_START;
-	self.leftTime = MjConsts.OPE_TIME.ReadyLeftTime;
+	self.leftTime = MjConsts.TIME_CONF.ReadyLeftTime;
 
 	var param = {
 		groupName: MjConsts.MSG_GROUP_NAME,
@@ -440,8 +478,7 @@ pro.waitToStart = function () {
 	};
 	self.broadCastMsg(param);
 
-	self.clearIntervalTimer();
-	self.intervalID = setInterval(function () {
+	self.startIntervalTimer(function () {
 		self.leftTime -= 1000;
 		if (self.leftTime <= 0) {
 			self.clearIntervalTimer();
@@ -451,7 +488,7 @@ pro.waitToStart = function () {
 			//踢出没有准备的玩家
 			for (var tMid in self.userList) {
 				var userItem = self.userList[tMid];
-				if (userItem.ready === 0) {
+				if (userItem.ready == 0) {
 					hasUserUnready = true;
 					self.leaveRoom(tMid);
 
@@ -474,12 +511,20 @@ pro.waitToStart = function () {
 pro.gameStart = function () {
 	var self = this;
 
+	//确定庄家
+	self.zhuangSeatID += 1;
+	if (self.zhuangSeatID > self.maxPlayerNum) {
+		self.zhuangSeatID -= self.maxPlayerNum;
+	}
+	self.zhuangMid = self.seatMidMap[self.zhuangSeatID];
+
 	self.roomState = Consts.ROOM.STATE.PLAYING;
 	var param = {
 		groupName: MjConsts.MSG_GROUP_NAME,
 		res: {
 			socketCmd: SocketCmd.GAME_START,
 			roomState: self.roomState,
+			zhuangMid: self.zhuangMid,
 		},
 	};
 	self.broadCastMsg(param);
@@ -488,10 +533,10 @@ pro.gameStart = function () {
 	self.shuffle();
 
 	//延时开始发牌
-	self.clearTimeoutTimer();
-	self.timeoutID = setTimeout(function () {
+	self.startTimeoutTimer(function () {
 		self.faPai();
-	}, MjConsts.OPE_TIME.GameStartAnimTime);
+		self.clearTimeoutTimer();
+	}, MjConsts.TIME_CONF.GameStartAnimTime);
 };
 
 //发牌
@@ -505,16 +550,16 @@ pro.faPai = function () {
 			return (a - b);
 		});
 		userItem.handCards = cardList;
-
-		var param = {
-			groupName: MjConsts.MSG_GROUP_NAME,
-			res: {
-				socketCmd: SocketCmd.FA_PAI,
-				cardList: cardList,
-			},
-		};
-		self.pushMessageByUids([tMid], param);
 	}
+
+	self.gameState = MjConsts.GAME_STATE.FA_PAI;
+	self.leftTime = 0;
+	self.curOpeMid = 0;
+	self.curOpeList = {};
+	self.lastOpeMid = 0;
+	self.lastOpeObj = {};
+
+	self.sendRoundInfo();
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -529,9 +574,6 @@ pro.shuffle = function () {
 		var card = tmpCardList.splice(random, 1);
 		this.cardList.push(card[0]);
 	}
-
-	console.log("洗牌完成，如下：");
-	utils.printObj(this.cardList);
 };
 
 //获取可用的座位号
@@ -568,7 +610,7 @@ pro.startReqRobotTimer = function () {
 
 	self.clearTimeoutTimer();
 	logger.info("开启timeout定时器，请求机器人进入房间");
-	self.timeoutID = setTimeout(function () {
+	self.startTimeoutTimer(function () {
 		var param = {
 			minGold: self.roomConfig.limitMin,
 			maxGold: self.roomConfig.limitMax,
@@ -583,9 +625,17 @@ pro.startReqRobotTimer = function () {
 				}
 			}
 		});
-	}, MjConsts.OPE_TIME.ReqRobotTime);
+	}, MjConsts.TIME_CONF.ReqRobotTime);
 };
 
+//开启延时定时器
+pro.startTimeoutTimer = function (func, delayTime) {
+	var self = this;
+	self.clearTimeoutTimer();
+	self.timeoutID = setTimeout(func, delayTime);
+};
+
+//停止延时定时器
 pro.clearTimeoutTimer = function () {
 	if (this.timeoutID) {
 		logger.info("清除已有timeout定时器");
@@ -594,6 +644,14 @@ pro.clearTimeoutTimer = function () {
 	}
 };
 
+//开始循环定时器
+pro.startIntervalTimer = function (func, interval) {
+	var self = this;
+	self.clearIntervalTimer();
+	self.intervalID = setInterval(func, interval);
+};
+
+//清除循环定时器
 pro.clearIntervalTimer = function () {
 	if (this.intervalID) {
 		logger.info("清除已有interval定时器");

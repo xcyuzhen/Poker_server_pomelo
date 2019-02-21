@@ -15,17 +15,28 @@ module.exports = {
 		0x41,0x41,0x41,0x41,0x42,0x42,0x42,0x42,0x43,0x43,0x43,0x43,0x44,0x44,0x44,0x44,
 	],
 
+	//游戏状态
+	GAME_STATE: {
+		INIT: 0, 																//初始化
+		FA_PAI: 1, 																//发牌
+		DA_PAI: 2, 																//打牌
+		RESULT: 3, 																//结算
+		OVER: 4, 																//结束
+	},
+
+	//操作类型
 	OPE_TYPE: {
-		GUO: 0,
-		PENG: 1,
-		GANG: 2,
-		AN_GANG: 3,
-		BU_GANG: 4,
-		HU: 5,
+		NO_OPT: -1, 															//无操作
+		GUO: 0, 																//过
+		PENG: 1, 																//碰
+		GANG: 2,																//杠
+		AN_GANG: 3,																//暗杠
+		BU_GANG: 4,																//补杠
+		HU: 5,																	//胡
 	},
 
 	//操作时间
-	OPE_TIME: {
+	TIME_CONF: {
 		ReqRobotTime: 300,														//玩家进入离开房间请求机器人的延时
 		ReadyLeftTime: 12000, 													//准备时间
 		GameStartAnimTime: 1000, 												//游戏开始动画时长
