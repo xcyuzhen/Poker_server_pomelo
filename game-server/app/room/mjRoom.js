@@ -542,14 +542,16 @@ pro.gameStart = function () {
 //发牌
 pro.faPai = function () {
 	var self = this;
+	var cardsNum = 13;
 
 	for (var tMid in self.userList) {
 		var userItem = self.userList[tMid];
-		var cardList = self.cardList.splice((self.cardList.length - 14), 13);
+		var cardList = self.cardList.splice((self.cardList.length - (cardsNum + 1)), cardsNum);
 		cardList.sort(function (a, b) {
 			return (a - b);
 		});
 		userItem.handCards = cardList;
+		userItem.handCardsNum = cardsNum;
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
