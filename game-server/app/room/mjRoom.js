@@ -46,6 +46,7 @@ pro.initRoom = function (roomConfig) {
 
 	//初始化牌局数据
 	this.cardList = []; 											//牌列表
+	this.leftCardsNum = 0; 											//剩余拍张数量
 	this.zhuangSeatID = 0; 											//庄家座位号
 	this.zhuangMid = 0; 											//庄家mid
 	this.curTurnSeatID = 0; 										//当前摸牌打牌操作座位号
@@ -161,6 +162,7 @@ pro.sendRoundInfo = function () {
 				roomState: self.roomState,
 				gameState: self.gameState,
 				leftTime: self.leftTime,
+				leftCardsNum: self.leftCardsNum,
 				curOpeMid: self.curOpeMid,
 				curOpeList: self.curOpeList,
 				lastOpeMid: self.lastOpeMid,
@@ -552,6 +554,7 @@ pro.faPai = function () {
 		});
 		userItem.handCards = cardList;
 		userItem.handCardsNum = cardsNum;
+		self.leftCardsNum -= cardsNum;
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
@@ -576,6 +579,8 @@ pro.shuffle = function () {
 		var card = tmpCardList.splice(random, 1);
 		this.cardList.push(card[0]);
 	}
+
+	this.leftCardsNum = this.cardList.length - MjConsts.MA_NUM;
 };
 
 //获取可用的座位号
