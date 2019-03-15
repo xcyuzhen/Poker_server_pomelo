@@ -178,7 +178,7 @@ pro.broadcastRoundInfo = function () {
 };
 
 //向玩家列表中的玩家发送回合消息
-pro.pushRoundInfoByMids(midList) {
+pro.pushRoundInfoByMids = function (midList) {
 	midList = midList || [];
 	if (midList.length <= 0) {
 		return;
