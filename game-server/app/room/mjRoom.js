@@ -52,8 +52,9 @@ pro.initRoom = function (roomConfig) {
 	this.curTurnSeatID = 0; 										//当前摸牌打牌操作座位号
 	this.leftTime = 0; 												//当前操作倒计时
 	this.gameState = MjConsts.GAME_STATE.INIT; 						//当前游戏状态
-	this.curOpeMid = 0; 											//当前可操作人mid
-	this.curOpeList = {}; 											//当前可操作列表
+	this.curOpeMid = 0; 											//当前可操作玩家mid
+	this.curOpeList = []; 											//当前可操作列表
+	this.curOutCardMid = 0; 										//当前要出牌的玩家mid
 	this.lastOpeMid = 0; 											//上次操作人mid
 	this.lastOpeObj = {}; 											//上次操作对象
 
@@ -143,8 +144,8 @@ pro.updateUserSeatList = function () {
 	self.broadCastMsg(param);
 };
 
-//发送回合消息
-pro.sendRoundInfo = function () {
+//广播回合消息
+pro.broadcastRoundInfo = function () {
 	var self = this;
 
 	//给每个玩家发送回合消息，每个玩家只能看到自己的手牌
@@ -164,14 +165,51 @@ pro.sendRoundInfo = function () {
 				leftTime: self.leftTime,
 				leftCardsNum: self.leftCardsNum,
 				curOpeMid: self.curOpeMid,
-				curOpeList: self.curOpeList,
+				curOpeList: utils.clone(self.curOpeList),
+				curOutCardMid: self.curOutCardMid,
 				lastOpeMid: self.lastOpeMid,
-				lastOpeObj: self.lastOpeObj,
+				lastOpeObj: utils.clone(self.lastOpeObj),
 				userList: gameUserList,
 			},
 		};
 
 		self.pushMessageByUids([tMid], param);
+	}
+};
+
+//向玩家列表中的玩家发送回合消息
+pro.pushRoundInfoByMids(midList) {
+	midList = midList || [];
+	if (midList.length <= 0) {
+		return;
+	}
+
+	for (var i = 0; i < midList.length; i++) {
+		var mid = midList[i];
+		var gameUserList = {};
+		for (var gMid in self.userList) {
+			var tUserItem = self.userList[gMid];
+			gameUserList[gMid] = tUserItem.exportClientGameData(mid);
+		}
+
+		var param = {
+			groupName: MjConsts.MSG_GROUP_NAME,
+			res: {
+				socketCmd: SocketCmd.ROUND_INFO,
+				roomState: self.roomState,
+				gameState: self.gameState,
+				leftTime: self.leftTime,
+				leftCardsNum: self.leftCardsNum,
+				curOpeMid: self.curOpeMid,
+				curOpeList: utils.clone(self.curOpeList),
+				curOutCardMid: self.curOutCardMid,
+				lastOpeMid: self.lastOpeMid,
+				lastOpeObj: utils.clone(self.lastOpeObj),
+				userList: gameUserList,
+			},
+		};
+
+		self.pushMessageByUids([mid], param);
 	}
 };
 
@@ -560,18 +598,19 @@ pro.faPai = function () {
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
 	self.leftTime = 0;
 	self.curOpeMid = 0;
-	self.curOpeList = {};
+	self.curOpeList = [];
+	self.curOutCardMid = 0;
 	self.lastOpeMid = 0;
 	self.lastOpeObj = {};
 
-	self.sendRoundInfo();
+	self.broadcastRoundInfo();
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
 /////////////////////////////////////功能函数begin/////////////////////////////////////
 //洗牌
 pro.shuffle = function () {
-	var tmpCardList = MjConsts.CARD_LIST.concat();
+	var tmpCardList = utils.clone(MjConsts.CARD_LIST);
 	this.cardList = [];
 
 	while (tmpCardList.length > 0) {

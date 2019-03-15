@@ -62,17 +62,17 @@ utils.invokeCallback = function(cb) {
  * clone an object
  */
 utils.clone = function(origin) {
-    if(!origin) {
-        return;
-    }
-
-    var obj = {};
-    for(var f in origin) {
-        if(origin.hasOwnProperty(f)) {
-            obj[f] = origin[f];
+    var result = Array.isArray(origin) ? [] : {};
+    for (var key in origin) {
+        if (origin.hasOwnProperty(key)) {
+            if (typeof origin[key] === 'object') {
+                result[key] = utils.clone(origin[key]);
+            } else {
+                result[key] = origin[key];
+            }
         }
     }
-    return obj;
+    return result;
 };
 
 utils.size = function(obj) {
