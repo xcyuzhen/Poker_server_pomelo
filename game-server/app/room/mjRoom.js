@@ -639,6 +639,25 @@ pro.getAvailableSeatID = function () {
 	}
 };
 
+//获取除了参数列表中的mid的mid列表
+pro.getMidListExcept = function (exceptMidList) {
+	exceptMidList = exceptMidList || [];
+	var resultMidList = [];
+	for (var mid in this.userList) {
+		var found = false;
+		for (var i = 0; i < exceptMidList.length; i++) {
+			if (mid == exceptMidList[i]) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			resultMidList.push(mid);
+		}
+	}
+};
+
 //导出发送给客户端的roomData
 pro.exportRoomData = function () {
 	var data = {};
