@@ -587,9 +587,6 @@ pro.faPai = function () {
 	for (var tMid in self.userList) {
 		var userItem = self.userList[tMid];
 		var cardList = self.cardList.splice((self.cardList.length - (cardsNum + 1)), cardsNum);
-		cardList.sort(function (a, b) {
-			return (a - b);
-		});
 		userItem.handCards = cardList;
 		userItem.handCardsNum = cardsNum;
 		self.leftCardsNum -= cardsNum;
