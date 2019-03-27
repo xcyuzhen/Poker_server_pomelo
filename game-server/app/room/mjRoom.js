@@ -508,6 +508,7 @@ pro.waitToStart = function () {
 	self.roomState = Consts.ROOM.STATE.WAIT_TO_START;
 	self.leftTime = MjConsts.TIME_CONF.ReadyLeftTime;
 
+	//广播
 	var param = {
 		groupName: MjConsts.MSG_GROUP_NAME,
 		res: {
@@ -518,33 +519,29 @@ pro.waitToStart = function () {
 	};
 	self.broadCastMsg(param);
 
-	self.startIntervalTimer(function () {
-		self.leftTime -= 1000;
-		if (self.leftTime <= 0) {
-			self.clearIntervalTimer();
+	//开启定时器
+	self.startGameTimer(function () {
+		var hasUserUnready = false;
 
-			var hasUserUnready = false;
+		//踢出没有准备的玩家
+		for (var tMid in self.userList) {
+			var userItem = self.userList[tMid];
+			if (userItem.ready == 0) {
+				hasUserUnready = true;
+				self.leaveRoom(tMid);
 
-			//踢出没有准备的玩家
-			for (var tMid in self.userList) {
-				var userItem = self.userList[tMid];
-				if (userItem.ready == 0) {
-					hasUserUnready = true;
-					self.leaveRoom(tMid);
-
-					//通知被踢出玩家
-					var param = {
-						groupName: MjConsts.MSG_GROUP_NAME,
-						res: {
-							socketCmd: SocketCmd.USER_KICK,
-							msg: "准备超时，您已经被踢出房间！",
-						},
-					};
-					self.pushMessageByUids([tMid], param);
-				}
+				//通知被踢出玩家
+				var param = {
+					groupName: MjConsts.MSG_GROUP_NAME,
+					res: {
+						socketCmd: SocketCmd.USER_KICK,
+						msg: "准备超时，您已经被踢出房间！",
+					},
+				};
+				self.pushMessageByUids([tMid], param);
 			}
 		}
-	}, 1000);
+	});
 };
 
 //游戏开始
@@ -574,8 +571,8 @@ pro.gameStart = function () {
 
 	//延时开始发牌
 	self.startTimeoutTimer(function () {
-		self.faPai();
 		self.clearTimeoutTimer();
+		self.faPai();
 	}, MjConsts.TIME_CONF.GameStartAnimTime);
 };
 
@@ -600,7 +597,14 @@ pro.faPai = function () {
 	self.lastOpeMid = 0;
 	self.lastOpeObj = {};
 
+	//广播发牌信息
 	self.broadcastRoundInfo();
+
+	//延时开始打牌
+	self.startTimeoutTimer(function () {
+		self.clearTimeoutTimer();
+
+	}, MjConsts.TIME_CONF.FaPaiAnimTime);
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -720,6 +724,27 @@ pro.clearIntervalTimer = function () {
 		clearInterval(this.intervalID);
 		this.intervalID = null;
 	}
+};
+
+//开始游戏计时器
+pro.startGameTimer = function (endCallBack) {
+	var self = this;
+	self.startIntervalTimer(function () {
+		self.leftTime -= 1000;
+		if (self.leftTime <= 0) {
+			self.stopGameTimer();
+			self.leftTime = 0;
+
+			if (!!endCallBack) {
+				endCallBack();
+			}
+		}
+	}, 1000);
+};
+
+//停止游戏计时器
+pro.stopGameTimer = function () {
+	this.clearIntervalTimer();
 };
 
 //清空房间
