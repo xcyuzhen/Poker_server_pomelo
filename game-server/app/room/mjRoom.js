@@ -46,7 +46,6 @@ pro.initRoom = function (roomConfig) {
 
 	//初始化牌局数据
 	this.cardList = []; 											//牌列表
-	this.leftCardsNum = 0; 											//剩余拍张数量
 	this.zhuangSeatID = 0; 											//庄家座位号
 	this.zhuangMid = 0; 											//庄家mid
 	this.curTurnSeatID = 0; 										//当前摸牌打牌操作座位号
@@ -56,7 +55,8 @@ pro.initRoom = function (roomConfig) {
 	this.curOpeList = []; 											//当前可操作列表
 	this.curOutCardMid = 0; 										//当前要出牌的玩家mid
 	this.lastOpeMid = 0; 											//上次操作人mid
-	this.lastOpeObj = {}; 											//上次操作对象
+	this.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;					//上次操作类型
+	this.lastOpeData = null;										//上次操作数据
 
 	//初始化channel
 	this.channel = this.channelService.getChannel(roomNum, true);
@@ -163,12 +163,13 @@ pro.broadcastRoundInfo = function () {
 				roomState: self.roomState,
 				gameState: self.gameState,
 				leftTime: self.leftTime,
-				leftCardsNum: self.leftCardsNum,
+				leftCardsNum: this.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
 				curOutCardMid: self.curOutCardMid,
 				lastOpeMid: self.lastOpeMid,
-				lastOpeObj: utils.clone(self.lastOpeObj),
+				lastOpeType: self.lastOpeType,
+				lastOpeData: self.lastOpeData,
 				userList: gameUserList,
 			},
 		};
@@ -199,12 +200,13 @@ pro.pushRoundInfoByMids = function (midList) {
 				roomState: self.roomState,
 				gameState: self.gameState,
 				leftTime: self.leftTime,
-				leftCardsNum: self.leftCardsNum,
+				leftCardsNum: this.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
 				curOutCardMid: self.curOutCardMid,
 				lastOpeMid: self.lastOpeMid,
-				lastOpeObj: utils.clone(self.lastOpeObj),
+				lastOpeType: self.lastOpeType,
+				lastOpeData: self.lastOpeData,
 				userList: gameUserList,
 			},
 		};
@@ -498,6 +500,14 @@ pro.userReady = function (mid, msg, cb) {
 		self.gameStart();
 	}
 };
+
+//玩家请求操作
+pro.userOpeRequest = function (msg, cb) {
+	var opeType = msg.opeType;
+	var opeData = msg.opeData;
+
+	//验证操作是否合法
+};
 /////////////////////////////////////客户端请求处理end/////////////////////////////////////
 
 /////////////////////////////////////牌局流程begin/////////////////////////////////////
@@ -585,8 +595,6 @@ pro.faPai = function () {
 		var userItem = self.userList[tMid];
 		var cardList = self.cardList.splice((self.cardList.length - (cardsNum + 1)), cardsNum);
 		userItem.handCards = cardList;
-		userItem.handCardsNum = cardsNum;
-		self.leftCardsNum -= cardsNum;
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
@@ -595,7 +603,8 @@ pro.faPai = function () {
 	self.curOpeList = [];
 	self.curOutCardMid = 0;
 	self.lastOpeMid = 0;
-	self.lastOpeObj = {};
+	this.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;
+	this.lastOpeData = null;
 
 	//广播发牌信息
 	self.broadcastRoundInfo();
@@ -604,7 +613,74 @@ pro.faPai = function () {
 	self.startTimeoutTimer(function () {
 		self.clearTimeoutTimer();
 
+		self.gameState = MjConsts.GAME_STATE.DA_PAI;
+		self.curOpeMid = 0;
+		self.curOpeList = [];
+		self.lastOpeMid = 0;
+		self.roomState.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;
+		self.lastOpeData = null;
+		self.curTurnSeatID = self.zhuangSeatID;
+		self.curOutCardMid = self.seatMidMap[self.curTurnSeatID];
+
+		self.dragOneCard();
 	}, MjConsts.TIME_CONF.FaPaiAnimTime);
+};
+
+//抓一张牌
+pro.dragOneCard = function () {
+	var self = this;
+
+	//当前出牌人抓一张牌
+	var dragCard = self.handCards.splice(-1, 1)[0];
+	var curOutCardUserItem = self.userList[self.curOutCardMid];
+	curOutCardUserItem.handCards.push(dragCard);
+
+	//检测操作
+	var opeList = [];
+	//检测是否有暗杠
+	var anGangList = curOutCardUserItem.checkAnGang();
+	//检测是否有补杠
+	var buGangList = curOutCardUserItem.checkBuGang();
+	//检测是否胡牌
+	var canHuPai = curOutCardUserItem.checkHuPai();
+
+	for (var i = 0; i < anGangList.length - 1; i ++) {
+		var opeItem = {
+			opeType: MjConsts.OPE_TYPE.AN_GANG,
+			opeData: anGangList[i],
+		};
+		opeList.push(opeItem);
+	}
+
+	for (var i = 0; i < buGangList.length - 1; i ++) {
+		var opeItem = {
+			opeType: MjConsts.OPE_TYPE.BU_GANG,
+			opeData: buGangList[i],
+		};
+		opeList.push(opeItem);
+	}
+
+	if (canHuPai) {
+		opeList.push({opeType: MjConsts.OPE_TYPE.HU, opeData: dragCard});
+	}
+
+	if (opeList.length > 0) {
+		//其他人推送的消息
+		self.curOpeMid = 0;
+		self.curOpeList = [];
+		var otherMidList = self.getMidListExcept(self.curOutCardMid);
+		self.pushRoundInfoByMids(otherMidList);
+
+		//给可操作人推送的消息
+		self.curOpeMid = self.curOutCardMid;
+		self.curOpeList = opeList;
+		self.pushRoundInfoByMids([self.curOutCardMid]);
+	} else {
+		//所有玩家推送一样的回合消息
+		self.curOpeMid = 0;
+		self.curOpeList = [];
+		self.broadcastRoundInfo();
+	}
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -616,11 +692,9 @@ pro.shuffle = function () {
 
 	while (tmpCardList.length > 0) {
 		var random = utils.randomNum(0, (tmpCardList.length - 1));
-		var card = tmpCardList.splice(random, 1);
-		this.cardList.push(card[0]);
+		var card = tmpCardList.splice(random, 1)[0];
+		this.cardList.push(card);
 	}
-
-	this.leftCardsNum = this.cardList.length - MjConsts.MA_NUM;
 };
 
 //获取可用的座位号

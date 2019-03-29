@@ -45,10 +45,17 @@ module.exports = {
 
 	//操作时间
 	TIME_CONF: {
+		//ai操作时间配置
 		ReqRobotTime: 300,														//玩家进入离开房间请求机器人的延时
-		ReadyLeftTime: 12000, 													//准备时间
+
+		//动画时间
 		GameStartAnimTime: 1000, 												//游戏开始动画时长
 		FaPaiAnimTime: 2000, 													//发牌时长
+
+		//流程时长
+		ReadyLeftTime: 12000, 													//准备时间
+		OutCardLeftTime: 10000, 												//打牌等待时长
+		OpeLeftTime: 5000, 														//吃碰杠胡等待时长
 	},
 
 	//机器人配置

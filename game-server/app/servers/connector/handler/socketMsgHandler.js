@@ -121,9 +121,10 @@ var commonRoomMsg = function (msg, session, next) {
 				logger.info("玩家 " + mid + " 所在的游戏服务器类型为 " + resp[0] + ", ID为 " + resp[1]);
 
 				//转发消息
-				self.app.rpc[resp[0]].roomRemote.socketMsg.toServer(resp[1], mid, msg, function (err) {
+				self.app.rpc[resp[0]].roomRemote.socketMsg.toServer(resp[1], mid, msg, function (err, data) {
 					console.log("请求处理完成返回, cmd = ", msg.socketCmd);
-					next(err, {code: Code.OK});
+					data = data || {code: Code.OK};
+					next(err, data);
 				});
 			} else {
 				logger.info("没有找到玩家 " + mid + " 所在的游戏服务器类型或者服务器ID，直接返回成功忽略掉该消息");
