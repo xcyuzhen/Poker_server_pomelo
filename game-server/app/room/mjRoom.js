@@ -630,6 +630,7 @@ pro.dragOneCard = function () {
 	var curOutCardMid = self.seatMidMap[self.curTurnSeatID];
 	var curOutCardUserItem = self.userList[curOutCardMid];
 	curOutCardUserItem.handCards.push(dragCard);
+	self.curOpeMid = curOutCardMid;
 
 	//检测操作
 	var opeList = [];
@@ -662,18 +663,15 @@ pro.dragOneCard = function () {
 
 	if (opeList.length > 0) {
 		//其他人推送的消息
-		self.curOpeMid = 0;
 		self.curOpeList = [];
 		var otherMidList = self.getMidListExcept(curOutCardMid);
 		self.pushRoundInfoByMids(otherMidList);
 
 		//给可操作人推送的消息
-		self.curOpeMid = curOutCardMid;
 		self.curOpeList = opeList;
 		self.pushRoundInfoByMids([curOutCardMid]);
 	} else {
 		//所有玩家推送一样的回合消息
-		self.curOpeMid = 0;
 		self.curOpeList = [];
 		self.broadcastRoundInfo();
 	}
