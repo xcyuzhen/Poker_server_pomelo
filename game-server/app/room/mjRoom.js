@@ -53,7 +53,6 @@ pro.initRoom = function (roomConfig) {
 	this.gameState = MjConsts.GAME_STATE.INIT; 						//当前游戏状态
 	this.curOpeMid = 0; 											//当前可操作玩家mid
 	this.curOpeList = []; 											//当前可操作列表
-	this.curOutCardMid = 0; 										//当前要出牌的玩家mid
 	this.lastOpeMid = 0; 											//上次操作人mid
 	this.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;					//上次操作类型
 	this.lastOpeData = null;										//上次操作数据
@@ -166,7 +165,6 @@ pro.broadcastRoundInfo = function () {
 				leftCardsNum: this.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
-				curOutCardMid: self.curOutCardMid,
 				lastOpeMid: self.lastOpeMid,
 				lastOpeType: self.lastOpeType,
 				lastOpeData: self.lastOpeData,
@@ -203,7 +201,6 @@ pro.pushRoundInfoByMids = function (midList) {
 				leftCardsNum: this.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
-				curOutCardMid: self.curOutCardMid,
 				lastOpeMid: self.lastOpeMid,
 				lastOpeType: self.lastOpeType,
 				lastOpeData: self.lastOpeData,
@@ -601,7 +598,6 @@ pro.faPai = function () {
 	self.leftTime = 0;
 	self.curOpeMid = 0;
 	self.curOpeList = [];
-	self.curOutCardMid = 0;
 	self.lastOpeMid = 0;
 	this.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;
 	this.lastOpeData = null;
@@ -620,7 +616,6 @@ pro.faPai = function () {
 		self.roomState.lastOpeType = MjConsts.OPE_TYPE.NO_OPT;
 		self.lastOpeData = null;
 		self.curTurnSeatID = self.zhuangSeatID;
-		self.curOutCardMid = self.seatMidMap[self.curTurnSeatID];
 
 		self.dragOneCard();
 	}, MjConsts.TIME_CONF.FaPaiAnimTime);
@@ -632,7 +627,8 @@ pro.dragOneCard = function () {
 
 	//当前出牌人抓一张牌
 	var dragCard = self.handCards.splice(-1, 1)[0];
-	var curOutCardUserItem = self.userList[self.curOutCardMid];
+	var curOutCardMid = self.seatMidMap[self.curTurnSeatID];
+	var curOutCardUserItem = self.userList[curOutCardMid];
 	curOutCardUserItem.handCards.push(dragCard);
 
 	//检测操作
@@ -668,13 +664,13 @@ pro.dragOneCard = function () {
 		//其他人推送的消息
 		self.curOpeMid = 0;
 		self.curOpeList = [];
-		var otherMidList = self.getMidListExcept(self.curOutCardMid);
+		var otherMidList = self.getMidListExcept(curOutCardMid);
 		self.pushRoundInfoByMids(otherMidList);
 
 		//给可操作人推送的消息
-		self.curOpeMid = self.curOutCardMid;
+		self.curOpeMid = curOutCardMid;
 		self.curOpeList = opeList;
-		self.pushRoundInfoByMids([self.curOutCardMid]);
+		self.pushRoundInfoByMids([curOutCardMid]);
 	} else {
 		//所有玩家推送一样的回合消息
 		self.curOpeMid = 0;
