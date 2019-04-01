@@ -8,6 +8,7 @@ module.exports = {
 	RELOAD_GAME: 20101, 							//断线重连
 	USER_LEAVE: 20102, 								//玩家离开房间
 	USER_READY: 20103, 								//玩家准备
+	USER_OPE: 20104, 								//玩家操作
 
 	//服务端返回给客户端协议
 	ROOM_INFO: 20200,								//房间信息

@@ -52,11 +52,11 @@ pro.exportClientData = function () {
 	data.online = this.online;
 
 	//玩家牌局数据
-	data.handCards = this.handCards;
-	data.outCards = this.outCards;
-	data.extraCards = this.extraCards;
+	data.handCards = utils.clone(this.handCards);
+	data.outCards = utils.clone(this.outCards);
+	data.extraCards = utils.clone(this.extraCards);
 	data.handCardsNum = this.handCards.length;
-	data.tingList = this.tingList;
+	data.tingList = utils.clone(this.tingList);
 
 	return data;
 };
@@ -95,12 +95,12 @@ pro.exportClientGameData = function (mid) {
 	data.mid = this.mid;
 	data.gold = this.gold;
 	data.diamond = this.diamond;
-	data.outCards = this.outCards;
-	data.extraCards = this.extraCards;
+	data.outCards = utils.clone(this.outCards);
+	data.extraCards = utils.clone(this.extraCards);
 	data.handCardsNum = this.handCards.length;
-	data.tingList = this.tingList;
+	data.tingList = utils.clone(this.tingList);
 	if (mid == this.mid) {
-		data.handCards = this.handCards.concat();
+		data.handCards = utils.clone(this.handCards);
 	} else {
 		data.handCards = [];
 	}
@@ -308,6 +308,15 @@ pro.clearLeaveRoomTimeoutTimer = function () {
 		clearTimeout(this.leaveRoomTimeoutID);
 		this.leaveRoomTimeoutID = null;
 	}
+};
+
+/**
+ * 自动打牌(倒计时结束)
+ *
+ * @return {Void}
+*/
+pro.autoOutCard = function () {
+
 };
 
 /**
