@@ -61,13 +61,23 @@ module.exports = {
 	//机器人配置
 	ROBOT: {
 		AutoReadyTime: { 														//自动准备时间
-			Min: 1,
-			Max: 3,
+			Min: 100,
+			Max: 200,
+		},
+
+		UpDataUserListLeave: { 													//房间中没有了真实玩家离开房间的时间
+			Min: 100,
+			Max: 300,
+		},
+
+		AutoOpeTime: { 															//自动操作的时间
+			Min: 1000,
+			Max: 2000,
 		},
 
 		AutoOutCardTime: { 														//自动出牌时间
-			Min: 1,
-			Max: 5,
+			Min: 1000,
+			Max: 5000,
 		},
 	},
 };

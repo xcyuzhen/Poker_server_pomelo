@@ -126,16 +126,11 @@ utils.debugTrace = function() {
     }
 };
 
-utils.randomNum = function (minNum, maxNum){ 
-    switch(arguments.length){ 
-        case 1: 
-            return parseInt(Math.random()*minNum+1,10); 
-            break; 
-        case 2: 
-            return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
-            break; 
-        default: 
-            return 0; 
-            break; 
-    } 
+utils.randomNum = function (minNum, maxNum){
+    minNum = minNum || 0;
+    maxNum = maxNum || 10;
+
+    var delta = maxNum + 1 - minNum;
+
+    return Math.floor(Math.random() * delta) + minNum;
 }

@@ -496,6 +496,12 @@ pro.userReady = function (mid, msg, cb) {
 pro.userOpeRequest = function (mid, msg, cb) {
 	var self = this;
 
+	//当前牌局已经结束，直接返回
+	if (self.gameState != MjConsts.GAME_STATE.DA_PAI) {
+		utils.invokeCallback(cb, null);
+		return;
+	}
+
 	var opeType = msg.opeType;
 	var opeData = msg.opeData;
 
@@ -520,43 +526,252 @@ pro.userOpeRequest = function (mid, msg, cb) {
 
 	if (opeLegal) {
 		//操作合法
+
+		//广播操作成功("过"操作不广播)
+		if (opeType != MjConsts.OPE_TYPE.GUO) {
+			self.stopGameTimer();
+
+			var param = {
+				groupName: MjConsts.MSG_GROUP_NAME,
+				res: {
+					socketCmd: SocketCmd.OPE_RSP,
+					code: Code.OK,
+					opeType: opeType,
+					opeData: opeData,
+				},
+			};
+			self.broadCastMsg(param);
+		}
+
+		var opeUserItem = self.userList[mid];
 		switch (opeType) {
+			case MjConsts.OPE_TYPE.GUO:
+				var curOutCardMid = self.seatMidMap[self.curTurnSeatID];
+				if (curOutCardMid == mid) {
+					//当前出牌人和操作人是同一人
+					//清除检测列表中除了打牌的检测
+					for (var i = self.opeCheckList.length - 1; i >= 0; i--) {
+						var checkItem = self.opeCheckList[i];
+						if (checkItem.opeType != MjConsts.OPE_TYPE.OUT_CARD) {
+							self.opeCheckList.splice(i, 1);
+						}
+					}
+
+					//清空当前操作列表
+					self.curOpeList = [];
+				} else {
+					//当前操作人和出牌人不是同一人
+					self.curTurnSeatID++;
+					if (self.curTurnSeatID > self.maxPlayerNum) {
+						self.curTurnSeatID = 1;
+					}
+
+					self.stopGameTimer();
+					self.dragOneCard();
+				}
+
+				break;
 			case MjConsts.OPE_TYPE.PENG:
+				//找到出牌人
+				var outCardMid = self.seatMidMap[self.curTurnSeatID];
+				var outCardUserItem = self.userList[outCardMid];
+
+				//删除出牌人出的最后一张牌
+				outCardUserItem.outCards.splice(-1, 1);
+
+				//删除碰牌人手牌中对应的两张手牌
+				var delCount = 0;
+				for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
+					if (opeUserItem.handCards[i] == opeData) {
+						opeUserItem.handCards.splice(i, 1);
+						delCount ++;
+						if (delCount == 2) {
+							break;
+						}
+					}
+				}
+
+				//插入到碰牌人的吃碰杠列表
+				opeUserItem.extraCards.push({opeType: opeType, opeData: opeData, targetMid: outCardMid});
+
+				//轮到碰牌人出牌
+				self.curTurnSeatID = opeUserItem.seatID;
+				self.curOpeMid = opeUserItem.mid;
+				self.leftTime = MjConsts.TIME_CONF.OutCardLeftTime;
+
+				//检测列表
+				self.opeCheckList = [];
+				self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.OUT_CARD});
+
+				//广播回合消息
+				self.broadcastRoundInfo();
+
 				break;
 			case MjConsts.OPE_TYPE.GANG:
+				//找到出牌人
+				var outCardMid = self.seatMidMap[self.curTurnSeatID];
+				var outCardUserItem = self.userList[outCardMid];
+
+				//删除出牌人出的最后一张牌
+				outCardUserItem.outCards.splice(-1, 1);
+
+				//删除杠牌人手牌中对应的三张手牌
+				var delCount = 0;
+				for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
+					if (opeUserItem.handCards[i] == opeData) {
+						opeUserItem.handCards.splice(i, 1);
+						delCount ++;
+						if (delCount == 3) {
+							break;
+						}
+					}
+				}
+
+				//插入到杠牌人的吃碰杠列表
+				opeUserItem.extraCards.push({opeType: opeType, opeData: opeData, targetMid: outCardMid});
+
+				//变更出牌人
+				self.curTurnSeatID = opeUserItem.seatID;
+
+				//抓牌
+				self.dragOneCard();
+
 				break;
 			case MjConsts.OPE_TYPE.AN_GANG:
-				break;
 			case MjConsts.OPE_TYPE.BU_GANG:
+				if (opeType == MjConsts.OPE_TYPE.AN_GANG) {
+					//删除杠牌人手牌中对应的四张手牌
+					var delCount = 0;
+					for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
+						if (opeUserItem.handCards[i] == opeData) {
+							opeUserItem.handCards.splice(i, 1);
+							delCount ++;
+							if (delCount == 3) {
+								break;
+							}
+						}
+					}
+				} else if (opeType == MjConsts.OPE_TYPE.BU_GANG) {
+					//删除杠牌人手牌中对应的一张手牌
+					for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
+						if (opeUserItem.handCards[i] == opeData) {
+							opeUserItem.handCards.splice(i, 1);
+							break;
+						}
+					}
+
+					//删除碰牌
+					for (var i = opeUserItem.extraCards.length - 1; i >= 0; i--) {
+						var extraItem = opeUserItem.extraCards[i];
+						if (extraItem.opeType == MjConsts.OPE_TYPE.PENG && extraItem.opeData = opeData) {
+							opeUserItem.extraCards.splice(i, 1);
+							break;
+						}
+					}
+				}
+
+				//插入到杠牌人的吃碰杠列表
+				opeUserItem.extraCards.push({opeType: opeType, cardValue: opeData, targetMid: opeUserItem.mid});
+
+				//变更出牌人
+				self.curTurnSeatID = opeUserItem.seatID;
+
+				//抓牌
+				self.dragOneCard();
 				break;
 			case MjConsts.OPE_TYPE.HU:
+				self.roundResult(mid);
 				break;
 			case MjConsts.OPE_TYPE.OUT_CARD:
+				//删除出牌人手牌中对应的牌
+				for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
+					if (opeUserItem.handCards[i] == opeData) {
+						opeUserItem.handCards.splice(i, 1);
+					}
+				}
+
+				//添加出牌人出的牌
+				opeUserItem.outCards.push(opeData);
+
+				//检测除了出牌人，其他人能不能碰或杠
+				var foundOpeMid = false
+				for (var tMid in self.userList) {
+					if (tMid != mid) {
+						var tUserItem = self.userList[tMid];
+						var opeList = self.getUserOpeList(tMid, null, opeData);
+						if (opeList.length > 0) {
+							foundOpeMid = true;
+
+							//添加检测列表
+							self.opeCheckList = [];
+							for (var j = 0; j < opeList.length; j++) {
+								var opeItem = opeList[j];
+								self.opeCheckList.push({opeType: opeItem.opeType, opeData: opeItem.opeData});
+							}
+							self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.GUO});
+
+							self.leftTime = MjConsts.TIME_CONF.OpeLeftTime;
+
+							//给其他玩家发送回合消息
+							self.curOpeMid = 0;
+							self.curOpeList = [];
+							var otherMidList = self.getMidListExcept(tMid);
+							self.pushRoundInfoByMids(otherMidList);
+
+							//给能碰杠玩家发送回合消息
+							self.curOpeMid = tMid;
+							self.curOpeList = opeList;
+							self.pushRoundInfoByMids([tMid]);
+
+							//开启倒计时
+							self.startGameTimer(function () {
+								self.userOpeRequest(tMid, {opeType: MjConsts.OPE_TYPE.GUO});
+							});
+
+							break;
+						}
+					}
+				}
+
 				break;
 		}
 	} else {
 		//操作不合法
 		//1.出牌不合法，发送给出牌人其吃碰杠牌，手牌和出牌用来刷新界面
-		//2.其他操作不合法，直接无视
-		switch (opeType) {
-			case MjConsts.OPE_TYPE.OUT_CARD:
-				if (!!cb) {
-					//有回调，是前端操作，返回玩家的各种牌
-					var opeUserItem = self.userList[mid];
+		//2.其他操作不合法，不给手牌等数据
+		if (!!cb) {
+			//有回调，是前端操作
+			var opeUserItem = self.userList[mid];
+			var param;
 
-					self.pushMessageByUids([mid], {
+			if (opeType == MjConsts.OPE_TYPE.OUT_CARD) {
+				param = {
+					groupName: MjConsts.MSG_GROUP_NAME,
+					res: {
+						socketCmd: SocketCmd.OPE_RSP,
 						code: Code.FAIL,
 						opeType: opeType,
 						opeData: opeData,
+						msg: "请求超时，操作失败",
 						extraCards: utils.clone(opeUserItem.extraCards),
 						handCards: utils.clone(opeUserItem.handCards),
 						outCards: utils.clone(opeUserItem.outCards),
-					});
+					},
+				};
+			} else {
+				param = {
+					groupName: MjConsts.MSG_GROUP_NAME,
+					res: {
+						socketCmd: SocketCmd.OPE_RSP,
+						code: Code.FAIL,
+						opeType: opeType,
+						opeData: opeData,
+						msg: "请求超时，操作失败",
+					},
+				};
+			}
 
-				} else {
-					//无回调，后端ai操作，不处理
-				}
-				break;
+			self.pushMessageByUids([mid], param);
 		}
 	}
 };
@@ -662,8 +877,6 @@ pro.faPai = function () {
 		self.clearTimeoutTimer();
 
 		self.gameState = MjConsts.GAME_STATE.DA_PAI;
-		self.curOpeMid = 0;
-		self.curOpeList = [];
 		self.curTurnSeatID = self.zhuangSeatID;
 
 		self.dragOneCard();
@@ -675,10 +888,11 @@ pro.dragOneCard = function () {
 	var self = this;
 
 	//清空操作检测列表
+	self.curOpeList = [];
 	self.opeCheckList = [];
 
 	//当前出牌人抓一张牌
-	var dragCard = self.handCards.splice(-1, 1)[0];
+	var dragCard = self.cardList.splice(-1, 1)[0];
 	var curOutCardMid = self.seatMidMap[self.curTurnSeatID];
 	var curOutCardUserItem = self.userList[curOutCardMid];
 	curOutCardUserItem.handCards.push(dragCard);
@@ -689,27 +903,11 @@ pro.dragOneCard = function () {
 	self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.OUT_CARD});
 
 	//检测操作
-	var opeList = [];
-	//检测是否有暗杠
-	var anGangList = curOutCardUserItem.checkAnGang();
-	//检测是否有补杠
-	var buGangList = curOutCardUserItem.checkBuGang();
-	//检测是否胡牌
-	var canHuPai = curOutCardUserItem.checkHuPai();
-
-	for (var i = 0; i < anGangList.length - 1; i ++) {
-		opeList.push({opeType: MjConsts.OPE_TYPE.AN_GANG, opeData: anGangList[i]});
-		self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.AN_GANG, opeData: anGangList[i]});
-	}
-
-	for (var i = 0; i < buGangList.length - 1; i ++) {
-		opeList.push({opeType: MjConsts.OPE_TYPE.BU_GANG, opeData: buGangList[i]});
-		self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.BU_GANG, opeData: buGangList[i]});
-	}
-
-	if (canHuPai) {
-		opeList.push({opeType: MjConsts.OPE_TYPE.HU, opeData: dragCard});
-		self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.HU, opeData: dragCard});
+	var opeList = self.getUserOpeList(curOutCardMid, dragCard);
+	//根据操作列表，填充检测列表
+	for (var i = 0; i < opeList.length; i++) {
+		var opeItem = opeList[i];
+		self.opeCheckList.push({opeType: opeItem.opeType, opeData: opeItem.opeData});
 	}
 
 	if (opeList.length > 0) {
@@ -725,15 +923,25 @@ pro.dragOneCard = function () {
 		self.curOpeList = opeList;
 		self.pushRoundInfoByMids([curOutCardMid]);
 	} else {
-		//所有玩家推送一样的回合消息
-		self.curOpeList = [];
-		self.broadcastRoundInfo();
+		//抓的是最后一张，牌局结束
+		if (self.cardList.length <= MjConsts.MA_NUM) {
+			self.roundResult();
+		} else {
+			//所有玩家推送一样的回合消息
+			self.curOpeList = [];
+			self.broadcastRoundInfo();
+		}
 	}
 
 	//开始倒计时
 	self.startGameTimer(function () {
 		curOutCardUserItem.autoOutCard();
 	});
+};
+
+//牌局结束
+pro.roundResult = function (huMid) {
+	console.log();
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -784,6 +992,57 @@ pro.getMidListExcept = function (exceptMidList) {
 			resultMidList.push(mid);
 		}
 	}
+};
+
+//获取玩家的操作列表(不包括"过")
+pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
+	var self = this;
+
+	var userItem = self.userList[mid];
+
+	//检测操作
+	var opeList = [];
+
+	//检测是否有碰
+	if (otherOutCard) {
+		var canPeng = userItem.checkPeng(otherOutCard);
+		if (canPeng) {
+			opeList.push({opeType: MjConsts.OPE_TYPE.PENG, opeData: otherOutCard});
+		}
+	}
+
+	//检测是否有杠
+	if (otherOutCard) {
+		var canGang = userItem.checkGang(otherOutCard);
+		if (canGang) {
+			opeList.push({opeType: MjConsts.OPE_TYPE.GANG, opeData: otherOutCard});
+		}
+	}
+
+	//检测是否有暗杠
+	if (dragCard) {
+		var anGangList = userItem.checkAnGang();
+		for (var i = 0; i < anGangList.length - 1; i ++) {
+			opeList.push({opeType: MjConsts.OPE_TYPE.AN_GANG, opeData: anGangList[i]});
+		}
+	}
+	//检测是否有补杠
+	if (dragCard) {
+		var buGangList = userItem.checkBuGang();
+		for (var i = 0; i < buGangList.length - 1; i ++) {
+			opeList.push({opeType: MjConsts.OPE_TYPE.BU_GANG, opeData: buGangList[i]});
+		}
+	}
+
+	//检测是否胡牌
+	if (dragCard) {
+		var canHuPai = userItem.checkHuPai();
+		if (canHuPai) {
+			opeList.push({opeType: MjConsts.OPE_TYPE.HU, opeData: dragCard});
+		}
+	}
+
+	return opeList;
 };
 
 //导出发送给客户端的roomData

@@ -122,49 +122,157 @@ pro.onSocketMsg = function (param) {
 
 	switch (socketCmd) {
 		case SocketCmd.UPDATE_USER_LIST:
-			//如果没有了真实玩家，延时离开房间
-			var realPlayerNum = self.room.getRealUserNum();
-			if (realPlayerNum == 0) {
-				if (!self.leaveRoomTimeoutID) {
-					var delayTime = utils.randomNum(100, 300);
-
-					self.leaveRoomTimeoutID = setTimeout(function () {
-						self.room.leaveRoom(self.mid);
-					}, delayTime);
-				}
-			} else {
-				self.clearLeaveRoomTimeoutTimer();
-			}
-
-			//如果房间人数不满，清除延时定时器定时器
-			var isRoomFull = self.room.isRoomFull();
-			if (!isRoomFull) {
-				self.clearTimeoutTimer();
-			}
+			self.aiUpdataUserList(res);
 
 			break;
 		case SocketCmd.WAIT_USER_READY:
-			self.clearTimeoutTimer();
-			if (self.ready == 0) {
-				var delayTime = utils.randomNum(100, 200);
-				self.timeoutID = setTimeout(function () {
-					self.room.userReady(self.mid);
-				}, delayTime);
-			}
+			self.aiWaitUserReady(res);
 
 			break;
 		case SocketCmd.ROUND_INFO:
-			//判断自己是否有其他操作，操作优先级(胡、杠、碰)
-			if (res.curOpeMid == self.mid) {
-
-			}
-
-			//判断是否轮到自己出牌
+			self.aiRoundInfo(res);
 
 			break;
 		default:
 	}
 };
+
+/**
+ * 自动打牌(倒计时结束)
+ *
+ * @return {Void}
+*/
+pro.autoOutCard = function () {
+	//打最后一张牌
+	var lastCard = this.handCards[this.handCards.length - 1];
+	this.room.userOpeRequest(this.mid, {opeType: MjConsts.OPE_TYPE.OUT_CARD, opeData: lastCard});
+};
+
+///////////////////////////////////////////////ai操作begin///////////////////////////////////////////////
+/**
+ * 机器人处理等待玩家准备消息
+ *
+ * @return {Void}
+*/
+pro.aiWaitUserReady = function (res) {
+	self.clearTimeoutTimer();
+	if (self.ready == 0) {
+		var delayTime = utils.randomNum(MjConsts.ROBOT.AutoReadyTime.Min, MjConsts.ROBOT.AutoReadyTime.Max);
+		self.startTimeoutTimer(delayTime, function () {
+			self.room.userReady(self.mid);
+		})
+	}
+};
+
+/**
+ * 机器人处理刷新玩家列表消息
+ *
+ * @return {Void}
+*/
+pro.aiUpdataUserList = function (res) {
+	//如果没有了真实玩家，延时离开房间
+	var realPlayerNum = self.room.getRealUserNum();
+	if (realPlayerNum == 0) {
+		if (!self.leaveRoomTimeoutID) {
+			var delayTime = utils.randomNum(MjConsts.ROBOT.UpDataUserListLeave.Min, MjConsts.ROBOT.UpDataUserListLeave.Max);
+
+			self.leaveRoomTimeoutID = setTimeout(function () {
+				self.room.leaveRoom(self.mid);
+			}, delayTime);
+		}
+	} else {
+		self.clearLeaveRoomTimeoutTimer();
+	}
+
+	//如果房间人数不满，清除延时定时器定时器
+	var isRoomFull = self.room.isRoomFull();
+	if (!isRoomFull) {
+		self.clearTimeoutTimer();
+	}
+};
+
+/**
+ * 机器人处理回合消息
+ *
+ * @return {Void}
+*/
+pro.aiRoundInfo = function (res) {
+	var self = this;
+
+	var curOpeMid = res.curOpeMid;
+	if (curOpeMid == self.mid) {
+		var curOpeList = res.curOpeList;
+		if (curOpeList.length > 0) {
+			var hasPengOpe = false;
+	        var pengData;
+	        var hasGangOpe = false;
+	        var gangOpeList = [];
+	        var hasHuOpe = false;
+	        var huData;
+
+	        for (var i = 0; i < curOpeList.length; i++) {
+	        	var opeType = curOpeList[i].opeType;
+	        	var opeData = curOpeList[i].opeData;
+
+	            switch (opeType) {
+	                case Config.OPE_TYPE.PENG:
+	                    hasPengOpe = true;
+	                    pengData = opeData;
+	                    break;
+	                case Config.OPE_TYPE.GANG:
+	                case Config.OPE_TYPE.BU_GANG:
+	                case Config.OPE_TYPE.AN_GANG:
+	                    hasGangOpe = true;
+	                    gangOpeList.push({opeType: opeType, opeData: opeData});
+	                    break;
+	                case Config.OPE_TYPE.HU:
+	                    hasHuOpe = true;
+	                    huData = opeData;
+	                    break;
+	            }
+	        }
+
+	        var resultOpeType, resultOpeData;
+	        if (hasHuOpe) {
+	        	resultOpeType = MjConsts.OPE_TYPE.HU;
+	        	resultOpeData = huData
+	        } else if (hasGangOpe) {
+	        	var randomIndex = utils.randomNum(0, gangOpeList.length-1);
+	        	var gangOpeItem = gangOpeList[randomIndex];
+
+	        	resultOpeType = gangOpeItem.opeType;
+	        	resultOpeData = gangOpeItem.opeData;
+	        } else if (hasPengOpe) {
+	        	resultOpeType = MjConsts.OPE_TYPE.PENG;
+	        	resultOpeData = pengData;
+	        }
+
+	        var delayTime = utils.randomNum(MjConsts.ROBOT.AutoOpeTime.Min, MjConsts.ROBOT.AutoOpeTime.Max);
+	        self.startTimeoutTimer(delayTime, function () {
+	        	self.room.userOpeRequest(self.mid, {opeType: resultOpeType, opeData: resultOpeData});
+	        });
+		} else {
+			//打牌操作
+			self.aiOutCard();
+		}
+	}
+};
+
+/**
+ * 机器人打牌
+ *
+ * @return {Void}
+*/
+pro.aiOutCard = function () {
+	var self = this;
+
+	var lastCard = self.handCards[self.handCards.length - 1];
+	var delayTime = utils.randomNum(MjConsts.ROBOT.AutoOutCardTime.Min, MjConsts.ROBOT.AutoOutCardTime.Max);
+    self.startTimeoutTimer(delayTime, function () {
+    	self.room.userOpeRequest(self.mid, {opeType: MjConsts.OPE_TYPE.OUT_CARD, opeData: lastCard});
+    });
+}
+///////////////////////////////////////////////ai操作end///////////////////////////////////////////////
 
 /**
  * 检测是否可以碰牌
@@ -275,6 +383,19 @@ pro.checkHuPai = function () {
 };
 
 /**
+ * 开始延时定时器
+ *
+ * @param  	{Number}   	time 			延时时间
+ * @param  	{Function} 	cb 				回调
+ * @return 	{Void}
+*/
+pro.startTimeoutTimer = function (time, cb) {
+	var self = this;
+	self.clearTimeoutTimer();
+	self.timeoutID = setTimeout(cb, time);
+};
+
+/**
  * 清除延时定时器
  *
  * @return {Void}
@@ -308,15 +429,6 @@ pro.clearLeaveRoomTimeoutTimer = function () {
 		clearTimeout(this.leaveRoomTimeoutID);
 		this.leaveRoomTimeoutID = null;
 	}
-};
-
-/**
- * 自动打牌(倒计时结束)
- *
- * @return {Void}
-*/
-pro.autoOutCard = function () {
-
 };
 
 /**
