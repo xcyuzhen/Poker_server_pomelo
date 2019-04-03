@@ -99,11 +99,11 @@ pro.exportClientGameData = function (mid) {
 	data.extraCards = utils.clone(this.extraCards);
 	data.handCardsNum = this.handCards.length;
 	data.tingList = utils.clone(this.tingList);
-	if (mid == this.mid) {
+	// if (mid == this.mid) {
 		data.handCards = utils.clone(this.handCards);
-	} else {
-		data.handCards = [];
-	}
+	// } else {
+	// 	data.handCards = [];
+	// }
 
 	return data;
 };
@@ -155,6 +155,8 @@ pro.autoOutCard = function () {
  * @return {Void}
 */
 pro.aiWaitUserReady = function (res) {
+	var self = this;
+
 	self.clearTimeoutTimer();
 	if (self.ready == 0) {
 		var delayTime = utils.randomNum(MjConsts.ROBOT.AutoReadyTime.Min, MjConsts.ROBOT.AutoReadyTime.Max);
@@ -170,6 +172,8 @@ pro.aiWaitUserReady = function (res) {
  * @return {Void}
 */
 pro.aiUpdataUserList = function (res) {
+	var self = this;
+
 	//如果没有了真实玩家，延时离开房间
 	var realPlayerNum = self.room.getRealUserNum();
 	if (realPlayerNum == 0) {
@@ -199,8 +203,7 @@ pro.aiUpdataUserList = function (res) {
 pro.aiRoundInfo = function (res) {
 	var self = this;
 
-	var curOpeMid = res.curOpeMid;
-	if (curOpeMid == self.mid) {
+	if (res.curOpeMid == self.mid) {
 		var curOpeList = res.curOpeList;
 		if (curOpeList.length > 0) {
 			var hasPengOpe = false;
@@ -215,17 +218,17 @@ pro.aiRoundInfo = function (res) {
 	        	var opeData = curOpeList[i].opeData;
 
 	            switch (opeType) {
-	                case Config.OPE_TYPE.PENG:
+	                case MjConsts.OPE_TYPE.PENG:
 	                    hasPengOpe = true;
 	                    pengData = opeData;
 	                    break;
-	                case Config.OPE_TYPE.GANG:
-	                case Config.OPE_TYPE.BU_GANG:
-	                case Config.OPE_TYPE.AN_GANG:
+	                case MjConsts.OPE_TYPE.GANG:
+	                case MjConsts.OPE_TYPE.BU_GANG:
+	                case MjConsts.OPE_TYPE.AN_GANG:
 	                    hasGangOpe = true;
 	                    gangOpeList.push({opeType: opeType, opeData: opeData});
 	                    break;
-	                case Config.OPE_TYPE.HU:
+	                case MjConsts.OPE_TYPE.HU:
 	                    hasHuOpe = true;
 	                    huData = opeData;
 	                    break;
@@ -359,7 +362,7 @@ pro.checkBuGang = function () {
 
 	for (var i = this.extraCards.length - 1; i >= 0; i--) {
 		var extraItem = this.extraCards[i];
-		if (extraItem[opeType] == mjConsts.OPE_TYPE.PENG) {
+		if (extraItem.opeType == MjConsts.OPE_TYPE.PENG) {
 			var extraData = extraItem.opeData;
 			for (var j = this.handCards.length - 1; j >= 0; j--) {
 				if (extraData == this.handCards[j]) {

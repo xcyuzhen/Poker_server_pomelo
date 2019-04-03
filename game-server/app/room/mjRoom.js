@@ -175,6 +175,8 @@ pro.broadcastRoundInfo = function () {
 
 //向玩家列表中的玩家发送回合消息
 pro.pushRoundInfoByMids = function (midList) {
+	var self = this;
+
 	midList = midList || [];
 	if (midList.length <= 0) {
 		return;
@@ -496,6 +498,9 @@ pro.userReady = function (mid, msg, cb) {
 pro.userOpeRequest = function (mid, msg, cb) {
 	var self = this;
 
+	console.log("AAAAAAAAAAAAAA 收到玩家请求 ", mid, msg.opeType, msg.opeData);
+	console.log("AAAAAAAAAAAAAA 当前游戏状态 ", self.gameState);
+
 	//当前牌局已经结束，直接返回
 	if (self.gameState != MjConsts.GAME_STATE.DA_PAI) {
 		utils.invokeCallback(cb, null);
@@ -524,6 +529,8 @@ pro.userOpeRequest = function (mid, msg, cb) {
 		}
 	}
 
+	console.log("AAAAAAAAAAAAAA 操作合法性 ", opeLegal);
+
 	if (opeLegal) {
 		//操作合法
 
@@ -536,6 +543,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				res: {
 					socketCmd: SocketCmd.OPE_RSP,
 					code: Code.OK,
+					opeMid: mid,
 					opeType: opeType,
 					opeData: opeData,
 				},
@@ -592,11 +600,12 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				}
 
 				//插入到碰牌人的吃碰杠列表
-				opeUserItem.extraCards.push({opeType: opeType, opeData: opeData, targetMid: outCardMid});
+				opeUserItem.extraCards.push({opeType: opeType, cardValue: opeData, targetMid: outCardMid});
 
 				//轮到碰牌人出牌
 				self.curTurnSeatID = opeUserItem.seatID;
 				self.curOpeMid = opeUserItem.mid;
+				self.curOpeList = [];
 				self.leftTime = MjConsts.TIME_CONF.OutCardLeftTime;
 
 				//检测列表
@@ -628,7 +637,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				}
 
 				//插入到杠牌人的吃碰杠列表
-				opeUserItem.extraCards.push({opeType: opeType, opeData: opeData, targetMid: outCardMid});
+				opeUserItem.extraCards.push({opeType: opeType, cardValue: opeData, targetMid: outCardMid});
 
 				//变更出牌人
 				self.curTurnSeatID = opeUserItem.seatID;
@@ -663,7 +672,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 					//删除碰牌
 					for (var i = opeUserItem.extraCards.length - 1; i >= 0; i--) {
 						var extraItem = opeUserItem.extraCards[i];
-						if (extraItem.opeType == MjConsts.OPE_TYPE.PENG && extraItem.opeData = opeData) {
+						if (extraItem.opeType == MjConsts.OPE_TYPE.PENG && extraItem.opeData == opeData) {
 							opeUserItem.extraCards.splice(i, 1);
 							break;
 						}
@@ -687,6 +696,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
 					if (opeUserItem.handCards[i] == opeData) {
 						opeUserItem.handCards.splice(i, 1);
+						break;
 					}
 				}
 
@@ -733,6 +743,15 @@ pro.userOpeRequest = function (mid, msg, cb) {
 					}
 				}
 
+				//没有可以碰杠的玩家，下一个人抓牌打牌
+				if (!foundOpeMid) {
+					self.curTurnSeatID++;
+					if (self.curTurnSeatID > self.maxPlayerNum) {
+						self.curTurnSeatID = 1;
+					}
+					self.dragOneCard();
+				}
+
 				break;
 		}
 	} else {
@@ -774,6 +793,8 @@ pro.userOpeRequest = function (mid, msg, cb) {
 			self.pushMessageByUids([mid], param);
 		}
 	}
+
+	utils.invokeCallback(cb, null);
 };
 /////////////////////////////////////客户端请求处理end/////////////////////////////////////
 
@@ -860,7 +881,7 @@ pro.faPai = function () {
 
 	for (var tMid in self.userList) {
 		var userItem = self.userList[tMid];
-		var cardList = self.cardList.splice((self.cardList.length - (cardsNum + 1)), cardsNum);
+		var cardList = self.cardList.splice(-cardsNum, cardsNum);
 		userItem.handCards = cardList;
 	}
 
@@ -934,14 +955,24 @@ pro.dragOneCard = function () {
 	}
 
 	//开始倒计时
-	self.startGameTimer(function () {
-		curOutCardUserItem.autoOutCard();
-	});
+	if (self.gameState == MjConsts.GAME_STATE.OUT_CARD) {
+		self.startGameTimer(function () {
+			curOutCardUserItem.autoOutCard();
+		});
+	}
 };
 
 //牌局结束
 pro.roundResult = function (huMid) {
-	console.log();
+	var self = this;
+
+	self.gameState = MjConsts.GAME_STATE.RESULT;
+
+	if (huMid == undefined || huMid == null) {
+		logger.info("牌局结束，流局");
+	} else {
+		logger.info("有人胡牌");
+	}
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -1154,6 +1185,7 @@ pro.clearRoom = function () {
 
 var socketCmdConfig = {
 	[SocketCmd.USER_READY]: "userReady",
+	[SocketCmd.OPE_REQ]: "userOpeRequest",
 };
 
 module.exports = Room;

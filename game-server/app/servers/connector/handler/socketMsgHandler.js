@@ -154,5 +154,6 @@ handler.initSocketCmdConfig = function() {
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 		[SocketCmd.USER_READY]: commonRoomMsg,
+		[SocketCmd.OPE_REQ]: commonRoomMsg,
 	};
 };
