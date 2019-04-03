@@ -127,8 +127,13 @@ utils.debugTrace = function() {
 };
 
 utils.randomNum = function (minNum, maxNum){
-    minNum = minNum || 0;
-    maxNum = maxNum || 10;
+    if (minNum == undefined || minNum == null) {
+        minNum = 0;
+    }
+
+    if (maxNum == undefined || maxNum == null) {
+        maxNum = 10;
+    }
 
     var delta = maxNum + 1 - minNum;
 

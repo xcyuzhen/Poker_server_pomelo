@@ -703,53 +703,58 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				//添加出牌人出的牌
 				opeUserItem.outCards.push(opeData);
 
-				//检测除了出牌人，其他人能不能碰或杠
-				var foundOpeMid = false
-				for (var tMid in self.userList) {
-					if (tMid != mid) {
-						var tUserItem = self.userList[tMid];
-						var opeList = self.getUserOpeList(tMid, null, opeData);
-						if (opeList.length > 0) {
-							foundOpeMid = true;
+				//没有牌了，流局
+				if (self.cardList.length <= MjConsts.MA_NUM) {
+					self.roundResult();
+				} else {
+					//检测除了出牌人，其他人能不能碰或杠
+					var foundOpeMid = false
+					for (var tMid in self.userList) {
+						if (tMid != mid) {
+							var tUserItem = self.userList[tMid];
+							var opeList = self.getUserOpeList(tMid, null, opeData);
+							if (opeList.length > 0) {
+								foundOpeMid = true;
 
-							//添加检测列表
-							self.opeCheckList = [];
-							for (var j = 0; j < opeList.length; j++) {
-								var opeItem = opeList[j];
-								self.opeCheckList.push({opeType: opeItem.opeType, opeData: opeItem.opeData});
+								//添加检测列表
+								self.opeCheckList = [];
+								for (var j = 0; j < opeList.length; j++) {
+									var opeItem = opeList[j];
+									self.opeCheckList.push({opeType: opeItem.opeType, opeData: opeItem.opeData});
+								}
+								self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.GUO});
+
+								self.leftTime = MjConsts.TIME_CONF.OpeLeftTime;
+
+								//给其他玩家发送回合消息
+								self.curOpeMid = 0;
+								self.curOpeList = [];
+								var otherMidList = self.getMidListExcept(tMid);
+								self.pushRoundInfoByMids(otherMidList);
+
+								//给能碰杠玩家发送回合消息
+								self.curOpeMid = tMid;
+								self.curOpeList = opeList;
+								self.pushRoundInfoByMids([tMid]);
+
+								//开启倒计时
+								self.startGameTimer(function () {
+									self.userOpeRequest(tMid, {opeType: MjConsts.OPE_TYPE.GUO});
+								});
+
+								break;
 							}
-							self.opeCheckList.push({opeType: MjConsts.OPE_TYPE.GUO});
-
-							self.leftTime = MjConsts.TIME_CONF.OpeLeftTime;
-
-							//给其他玩家发送回合消息
-							self.curOpeMid = 0;
-							self.curOpeList = [];
-							var otherMidList = self.getMidListExcept(tMid);
-							self.pushRoundInfoByMids(otherMidList);
-
-							//给能碰杠玩家发送回合消息
-							self.curOpeMid = tMid;
-							self.curOpeList = opeList;
-							self.pushRoundInfoByMids([tMid]);
-
-							//开启倒计时
-							self.startGameTimer(function () {
-								self.userOpeRequest(tMid, {opeType: MjConsts.OPE_TYPE.GUO});
-							});
-
-							break;
 						}
 					}
-				}
 
-				//没有可以碰杠的玩家，下一个人抓牌打牌
-				if (!foundOpeMid) {
-					self.curTurnSeatID++;
-					if (self.curTurnSeatID > self.maxPlayerNum) {
-						self.curTurnSeatID = 1;
+					//没有可以碰杠的玩家，下一个人抓牌打牌
+					if (!foundOpeMid) {
+						self.curTurnSeatID++;
+						if (self.curTurnSeatID > self.maxPlayerNum) {
+							self.curTurnSeatID = 1;
+						}
+						self.dragOneCard();
 					}
-					self.dragOneCard();
 				}
 
 				break;
@@ -883,6 +888,7 @@ pro.faPai = function () {
 		var userItem = self.userList[tMid];
 		var cardList = self.cardList.splice(-cardsNum, cardsNum);
 		userItem.handCards = cardList;
+		console.log("AAAAAAAAA BBBBBBBBBBBBBB ", tMid, cardList);
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
@@ -944,18 +950,13 @@ pro.dragOneCard = function () {
 		self.curOpeList = opeList;
 		self.pushRoundInfoByMids([curOutCardMid]);
 	} else {
-		//抓的是最后一张，牌局结束
-		if (self.cardList.length <= MjConsts.MA_NUM) {
-			self.roundResult();
-		} else {
-			//所有玩家推送一样的回合消息
-			self.curOpeList = [];
-			self.broadcastRoundInfo();
-		}
+		//所有玩家推送一样的回合消息
+		self.curOpeList = [];
+		self.broadcastRoundInfo();
 	}
 
 	//开始倒计时
-	if (self.gameState == MjConsts.GAME_STATE.OUT_CARD) {
+	if (self.gameState == MjConsts.GAME_STATE.DA_PAI) {
 		self.startGameTimer(function () {
 			curOutCardUserItem.autoOutCard();
 		});
@@ -1053,14 +1054,14 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	//检测是否有暗杠
 	if (dragCard) {
 		var anGangList = userItem.checkAnGang();
-		for (var i = 0; i < anGangList.length - 1; i ++) {
+		for (var i = 0; i < anGangList.length; i ++) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.AN_GANG, opeData: anGangList[i]});
 		}
 	}
 	//检测是否有补杠
 	if (dragCard) {
 		var buGangList = userItem.checkBuGang();
-		for (var i = 0; i < buGangList.length - 1; i ++) {
+		for (var i = 0; i < buGangList.length; i ++) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.BU_GANG, opeData: buGangList[i]});
 		}
 	}
