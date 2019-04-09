@@ -59,6 +59,11 @@ app.configure('production|development', "ddz", function () {
 app.configure('production|development', "mj", function () {
 	var mjRoomMgr = require('./app/components/mjRoomMgr');
 	app.load(mjRoomMgr);
+
+	var huApi = require('./app/util/mjlib_js/api');
+	huApi.Init();
+	huApi.MTableMgr.LoadTable();
+	app.set("MjHuApi", huApi);
 })
 
 // start app

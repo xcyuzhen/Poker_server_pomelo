@@ -1,3 +1,4 @@
+var pomelo = require('pomelo');
 var logger = require('pomelo-logger').getLogger(__filename);
 var SocketCmd = require('../models/socketCmd');
 var utils = require('../util/utils');
@@ -382,7 +383,8 @@ pro.checkBuGang = function () {
  * @return {Boolean} 	false-不能胡牌 true-能胡牌
 */
 pro.checkHuPai = function () {
-	return false;
+	var huApi = pomelo.app.get("MjHuApi");
+	return huApi.checkHu(this.handCards);
 };
 
 /**
