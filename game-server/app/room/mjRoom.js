@@ -548,6 +548,12 @@ pro.userOpeRequest = function (mid, msg, cb) {
 		if (opeType != MjConsts.OPE_TYPE.GUO) {
 			self.stopGameTimer();
 
+			//玩家自己出牌成功不通知他自己
+			var broadMsgMidList = self.getMidListExcept();
+			if (!!cb && opeType == MjConsts.OPE_TYPE.OUT_CARD) {
+				broadMsgMidList = self.getMidListExcept([mid]);
+			}
+
 			var param = {
 				groupName: MjConsts.MSG_GROUP_NAME,
 				res: {
@@ -558,7 +564,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 					opeData: opeData,
 				},
 			};
-			self.broadCastMsg(param);
+			self.pushMessageByUids(broadMsgMidList, param);
 
 			self.lastOpeMid = mid;
 			self.lastOpeItem = {opeType: opeType, opeData: opeData};
@@ -780,7 +786,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 								//给其他玩家发送回合消息
 								self.curOpeMid = 0;
 								self.curOpeList = [];
-								var otherMidList = self.getMidListExcept(tMid);
+								var otherMidList = self.getMidListExcept([tMid]);
 								self.pushRoundInfoByMids(otherMidList);
 
 								//给能碰杠玩家发送回合消息
@@ -997,7 +1003,7 @@ pro.dragOneCard = function () {
 
 		//其他人推送的消息
 		self.curOpeList = [];
-		var otherMidList = self.getMidListExcept(curOutCardMid);
+		var otherMidList = self.getMidListExcept([curOutCardMid]);
 		self.pushRoundInfoByMids(otherMidList);
 
 		//给可操作人推送的消息
@@ -1130,6 +1136,8 @@ pro.getMidListExcept = function (exceptMidList) {
 			resultMidList.push(mid);
 		}
 	}
+
+	return resultMidList;
 };
 
 //获取玩家的操作列表(不包括"过")
