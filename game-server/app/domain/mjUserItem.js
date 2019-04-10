@@ -26,6 +26,11 @@ var UserItem = function (room, data) {
 	this.extraCards = []; 									//吃碰杠牌的列表
 	this.tingList = []; 									//听牌列表
 
+	//玩家结算数据
+	this.rateList = []; 									//输赢倍数列表
+	this.roundScore = 0; 									//单局输赢分值
+	this.totalScore = 0; 									//总输赢分值
+
 	this.timeoutID = null; 									//延时定时器
 	this.intervalID = null; 								//循环计时ID
 	this.leaveRoomTimeoutID = null; 						//离开房间延时定时器
@@ -105,6 +110,25 @@ pro.exportClientGameData = function (mid) {
 	// } else {
 	// 	data.handCards = [];
 	// }
+
+	return data;
+};
+
+/**
+ * 导出前端的resultData
+ *
+ * @return {Object}
+ */
+pro.exportClientResultData = function () {
+	var data = {};
+
+	data.mid = this.mid;
+	data.gold = this.gold;
+	data.diamond = this.diamond;
+
+	data.handCards = utils.clone(this.handCards);
+	data.rateList = utils.clone(this.rateList);
+	data.winScore = this.winScore;
 
 	return data;
 };
@@ -277,6 +301,41 @@ pro.aiOutCard = function () {
     });
 }
 ///////////////////////////////////////////////ai操作end///////////////////////////////////////////////
+
+/**
+ * 游戏开始
+ *
+ * @return {Void}
+ */
+pro.gameStart = function () {
+	//清空单局游戏数据
+	this.handCards = [];
+	this.staHandCards = {};
+	this.outCards = [];
+	this.extraCards = [];
+	this.tingList = [];
+
+	this.rateList = [];
+	this.roundScore = 0;
+};
+
+/**
+ * 添加倍数项
+ *
+ * @param  {Object}   	rateItem 			倍数项
+ * @return {Void}
+ */
+pro.addRateItem = function (rateItem) {
+	this.rateList.push(rateItem);
+
+	//重新计算单局赢分
+	var baseRate = this.room.roomConfig.base;
+	var totalRate = 0;
+	for (var i = 0; i < this.rateList.length; i++) {
+		totalRate += this.rateList[i].rateValue;
+	}
+	this.roundScore = baseRate * totalRate;
+};
 
 /**
  * 检测是否可以碰牌

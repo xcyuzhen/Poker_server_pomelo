@@ -62,7 +62,7 @@ app.configure('production|development', "mj", function () {
 
 	var huApi = require('./app/util/mjlib_js/api');
 	huApi.Init();
-	huApi.MTableMgr.LoadTable();
+	huApi.MTableMgr.LoadAllTable();
 	app.set("MjHuApi", huApi);
 })
 

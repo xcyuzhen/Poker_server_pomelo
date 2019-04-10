@@ -57,6 +57,10 @@ pro.initRoom = function (roomConfig) {
 	this.curOpeMid = 0; 											//当前可操作玩家mid
 	this.curOpeList = []; 											//当前可操作列表
 
+	//结算数据
+	this.huMid = 0; 												//胡牌玩家mid
+	this.roundEndTime = "";											//结束时间字符串
+
 	//初始化channel
 	this.channel = this.channelService.getChannel(roomNum, true);
 
@@ -639,6 +643,16 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				//插入到杠牌人的吃碰杠列表
 				opeUserItem.extraCards.push({opeType: opeType, cardValue: opeData, targetMid: outCardMid});
 
+				//计分
+				//杠牌玩家计分
+				var rateType = MjConsts.RATE_TYPE.GANG;
+				var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1);
+				opeUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+				//被杠玩家计分
+				rateType = MjConsts.RATE_TYPE.FANG_GANG;
+				rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1);
+				outCardUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+
 				//变更出牌人
 				self.curTurnSeatID = opeUserItem.seatID;
 
@@ -682,6 +696,20 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				//插入到杠牌人的吃碰杠列表
 				opeUserItem.extraCards.push({opeType: opeType, cardValue: opeData, targetMid: opeUserItem.mid});
 
+				//计分
+				//杠牌玩家计分
+				var rateType = MjConsts.RATE_TYPE.ZI_GANG;
+				var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1);
+				opeUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+				//被杠玩家计分
+				rateType = MjConsts.RATE_TYPE.BEI_ZI_GANG;
+				rateValue = MjConsts.RATE_CONF[rateType];
+				for (var tMid in self.userList) {
+					if (tMid != mid) {
+						self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+					}
+				}
+
 				//变更出牌人
 				self.curTurnSeatID = opeUserItem.seatID;
 
@@ -689,7 +717,21 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				self.dragOneCard();
 				break;
 			case MjConsts.OPE_TYPE.HU:
-				self.roundResult(mid);
+				//计分
+				//胡牌玩家计分
+				var rateType = MjConsts.RATE_TYPE.HU;
+				var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1);
+				opeUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+				//被胡牌玩家计分
+				rateType = MjConsts.RATE_TYPE.BEI_HU;
+				rateValue = MjConsts.RATE_CONF[rateType];
+				for (var tMid in self.userList) {
+					if (tMid != mid) {
+						self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+					}
+				}
+
+				self.roundResult(mid, opeData);
 				break;
 			case MjConsts.OPE_TYPE.OUT_CARD:
 				//删除出牌人手牌中对应的牌
@@ -851,6 +893,11 @@ pro.waitToStart = function () {
 pro.gameStart = function () {
 	var self = this;
 
+	for (var tMid in self.userList) {
+		var userItem = self.userList[tMid];
+		userItem.gameStart();
+	}
+
 	//确定庄家
 	self.zhuangSeatID += 1;
 	if (self.zhuangSeatID > self.maxPlayerNum) {
@@ -888,7 +935,6 @@ pro.faPai = function () {
 		var userItem = self.userList[tMid];
 		var cardList = self.cardList.splice(-cardsNum, cardsNum);
 		userItem.handCards = cardList;
-		console.log("AAAAAAAAA BBBBBBBBBBBBBB ", tMid, cardList);
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
@@ -964,16 +1010,68 @@ pro.dragOneCard = function () {
 };
 
 //牌局结束
-pro.roundResult = function (huMid) {
+pro.roundResult = function (huMid, huCard) {
 	var self = this;
 
+	logger.info("牌局结束");
+
+	self.roomState = Consts.ROOM.STATE.ROUND_END;
 	self.gameState = MjConsts.GAME_STATE.RESULT;
 
-	if (huMid == undefined || huMid == null) {
-		logger.info("牌局结束，流局");
-	} else {
+	var endTime = new Date();
+	self.roundEndTime = [endTime.toLocaleDateString(), endTime.toLocaleTimeString()].join(" ");
+
+	var maList;
+	if (huMid && huMid > 0) {
 		logger.info("有人胡牌");
+
+		//摸马
+		maList = [];
+		var zhongNum = 0;
+		for (var i = 0; i < MjConsts.MA_NUM; i++) {
+			var card = self.cardList.splice(-1, 1)[0];
+			if (self.isMa(huCard, card)) {
+				maList.push({cardValue: card, result: 1});
+				zhongNum ++;
+			} else {
+				maList.push({cardValue: card, result: 0});
+			}
+		}
+
+		//摸马计分
+		//胡牌玩家计分
+		var huUserItem = self.userList[huMid];
+		var rateType = MjConsts.RATE_TYPE.MO_MA;
+		var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1) * zhongNum;
+		huUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+		//被胡玩家计分
+		rateType = MjConsts.RATE_TYPE.BEI_MA;
+		rateValue = MjConsts.RATE_CONF[rateType] * zhongNum;
+		for (var tMid in self.userList) {
+			if (tMid != huMid) {
+				self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+			}
+		}
 	}
+
+	var resultUserList = {};
+	for (var tMid in self.userList) {
+		resultUserList[tMid] = self.userList[tMid].exportClientResultData();
+	}
+
+	var param = {
+		groupName: MjConsts.MSG_GROUP_NAME,
+		res: {
+			socketCmd: SocketCmd.RESULT_INFO,
+			roomState: self.roomState,
+			gameState: self.gameState,
+			roundEndTime: self.roundEndTime,
+			huMid: huMid,
+			maList: maList,
+			userList: resultUserList,
+		},
+	};
+	self.broadCastMsg(param);
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 
@@ -1075,6 +1173,14 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	}
 
 	return opeList;
+};
+
+//判读是否是马
+pro.isMa = function (huCard, maCard) {
+	huCard = huCard % 9;
+	maCard = maCard % 9;
+
+	return (Math.abs(maCard - huCard) % 3 == 0);
 };
 
 //导出发送给客户端的roomData

@@ -43,6 +43,30 @@ module.exports = {
 		OUT_CARD: 6, 															//打牌
 	},
 
+	//倍数类型
+	RATE_TYPE: {
+		GANG: 1, 																//被人放杠
+		ZI_GANG: 2, 															//自摸杠
+		FANG_GANG: 3, 															//给别人放杠
+		BEI_ZI_GANG： 4, 														//被自摸杠
+		HU: 5, 																	//胡牌
+		BEI_HU: 6, 																//被胡牌
+		MO_MA: 7, 																//摸马
+		BEI_MA: 8, 																//被摸马
+	},
+
+	//倍数配置
+	RATE_CONF: {
+		RATE_TYPE.GANG: 1, 														//倍数*(玩家数-1)
+		RATE_TYPE.ZI_GANG: 1, 													//倍数*(玩家数-1)
+		RATE_TYPE.FANG_GANG: -1, 												//倍数*(玩家数-1)
+		RATE_TYPE.BEI_ZI_GANG: -1, 												//倍数
+		RATE_TYPE.HU: 1, 														//倍数*(玩家数-1)
+		RATE_TYPE.BEI_HU: -1, 													//倍数
+		RATE_TYPE.MO_MA: 1, 													//倍数*(玩家数-1)*马数
+		RATE_TYPE.BEI_MA: -1, 													//倍数*马数
+	},
+
 	//操作时间
 	TIME_CONF: {
 		//ai操作时间配置

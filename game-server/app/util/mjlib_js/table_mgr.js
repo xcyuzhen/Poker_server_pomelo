@@ -80,6 +80,11 @@ TableMgr.check = function( key, gui_num, eye, chi )
     return tbl.check( key );
 };
 
+TableMgr.LoadAllTable = function () {
+    this.LoadTable();
+    this.LoadFengTable();
+};
+
 TableMgr.LoadTable = function()
 {
     for( let i = 0; i < 9; i ++ )
