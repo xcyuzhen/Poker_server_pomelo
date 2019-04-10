@@ -56,6 +56,8 @@ pro.initRoom = function (roomConfig) {
 	this.leftTime = 0; 												//当前操作倒计时
 	this.curOpeMid = 0; 											//当前可操作玩家mid
 	this.curOpeList = []; 											//当前可操作列表
+	this.lastOpeMid = 0; 											//上次操作玩家mid
+	this.lastOpeItem = null; 										//上次操作数据
 
 	//结算数据
 	this.huMid = 0; 												//胡牌玩家mid
@@ -169,6 +171,8 @@ pro.broadcastRoundInfo = function () {
 				leftCardsNum: self.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
+				lastOpeMid: self.lastOpeMid,
+				lastOpeItem: utils.clone(self.lastOpeItem),
 				userList: gameUserList,
 			},
 		};
@@ -204,6 +208,8 @@ pro.pushRoundInfoByMids = function (midList) {
 				leftCardsNum: self.cardList.length - MjConsts.MA_NUM,
 				curOpeMid: self.curOpeMid,
 				curOpeList: utils.clone(self.curOpeList),
+				lastOpeMid: self.lastOpeMid,
+				lastOpeItem: utils.clone(self.lastOpeItem),
 				userList: gameUserList,
 			},
 		};
@@ -553,6 +559,9 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				},
 			};
 			self.broadCastMsg(param);
+
+			self.lastOpeMid = mid;
+			self.lastOpeItem = {opeType: opeType, opeData: opeData};
 		}
 
 		var opeUserItem = self.userList[mid];
@@ -669,7 +678,7 @@ pro.userOpeRequest = function (mid, msg, cb) {
 						if (opeUserItem.handCards[i] == opeData) {
 							opeUserItem.handCards.splice(i, 1);
 							delCount ++;
-							if (delCount == 3) {
+							if (delCount == 4) {
 								break;
 							}
 						}
@@ -893,6 +902,8 @@ pro.waitToStart = function () {
 pro.gameStart = function () {
 	var self = this;
 
+	self.resetGameData();
+
 	for (var tMid in self.userList) {
 		var userItem = self.userList[tMid];
 		userItem.gameStart();
@@ -938,9 +949,6 @@ pro.faPai = function () {
 	}
 
 	self.gameState = MjConsts.GAME_STATE.FA_PAI;
-	self.leftTime = 0;
-	self.curOpeMid = 0;
-	self.curOpeList = [];
 
 	//广播发牌信息
 	self.broadcastRoundInfo();
@@ -1181,6 +1189,21 @@ pro.isMa = function (huCard, maCard) {
 	maCard = maCard % 9;
 
 	return (Math.abs(maCard - huCard) % 3 == 0);
+};
+
+//重置局游戏数据
+pro.resetGameData = function () {
+	this.cardList = [];
+	this.curTurnSeatID = 0;
+	this.opeCheckList = [];
+	this.zhuangMid = 0;
+	this.leftTime = 0;
+	this.curOpeMid = 0;
+	this.curOpeList = [];
+	this.lastOpeMid = 0;
+	this.lastOpeItem = null;
+	this.huMid = 0;
+	this.roundEndTime = "";
 };
 
 //导出发送给客户端的roomData
