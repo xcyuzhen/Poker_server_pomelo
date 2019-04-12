@@ -1150,7 +1150,7 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	var opeList = [];
 
 	//检测是否有碰
-	if (otherOutCard) {
+	if (otherOutCard >= 0) {
 		var canPeng = userItem.checkPeng(otherOutCard);
 		if (canPeng) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.PENG, opeData: otherOutCard});
@@ -1158,7 +1158,7 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	}
 
 	//检测是否有杠
-	if (otherOutCard) {
+	if (otherOutCard >= 0) {
 		var canGang = userItem.checkGang(otherOutCard);
 		if (canGang) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.GANG, opeData: otherOutCard});
@@ -1166,14 +1166,14 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	}
 
 	//检测是否有暗杠
-	if (dragCard) {
+	if (dragCard >= 0) {
 		var anGangList = userItem.checkAnGang();
 		for (var i = 0; i < anGangList.length; i ++) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.AN_GANG, opeData: anGangList[i]});
 		}
 	}
 	//检测是否有补杠
-	if (dragCard) {
+	if (dragCard >= 0) {
 		var buGangList = userItem.checkBuGang();
 		for (var i = 0; i < buGangList.length; i ++) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.BU_GANG, opeData: buGangList[i]});
@@ -1181,7 +1181,7 @@ pro.getUserOpeList = function (mid, dragCard, otherOutCard) {
 	}
 
 	//检测是否胡牌
-	if (dragCard) {
+	if (dragCard >= 0) {
 		var canHuPai = userItem.checkHuPai();
 		if (canHuPai) {
 			opeList.push({opeType: MjConsts.OPE_TYPE.HU, opeData: dragCard});
