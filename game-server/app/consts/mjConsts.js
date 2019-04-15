@@ -46,21 +46,25 @@ Consts.OPE_TYPE = {
 //倍数类型
 Consts.RATE_TYPE = {
 	GANG: 1, 																//被人放杠
-	ZI_GANG: 2, 															//自摸杠
-	FANG_GANG: 3, 															//给别人放杠
-	BEI_ZI_GANG: 4, 														//被自摸杠
-	HU: 5, 																	//胡牌
-	BEI_HU: 6, 																//被胡牌
-	MO_MA: 7, 																//摸马
-	BEI_MA: 8, 																//被摸马
+	FANG_GANG: 2, 															//给别人放杠
+	AN_GANG: 3, 															//暗杠
+	BEI_AN_GANG: 4, 														//被暗杠
+	BU_GANG: 5, 															//补杠
+	BEI_BU_GANG: 6, 														//被补杠
+	HU: 7, 																	//胡牌
+	BEI_HU: 8, 																//被胡牌
+	MO_MA: 9, 																//摸马
+	BEI_MA: 10, 															//被摸马
 };
 
 //倍数配置
 Consts.RATE_CONF = {
 	[Consts.RATE_TYPE.GANG]: 1, 											//倍数*(玩家数-1)
-	[Consts.RATE_TYPE.ZI_GANG]: 1, 											//倍数*(玩家数-1)
 	[Consts.RATE_TYPE.FANG_GANG]: -1, 										//倍数*(玩家数-1)
-	[Consts.RATE_TYPE.BEI_ZI_GANG]: -1, 									//倍数
+	[Consts.RATE_TYPE.AN_GANG]: 1, 											//倍数*(玩家数-1)
+	[Consts.RATE_TYPE.BEI_AN_GANG]: -1, 									//倍数
+	[Consts.RATE_TYPE.BU_GANG]: 1, 											//倍数*(玩家数-1)
+	[Consts.RATE_TYPE.BEI_BU_GANG]: -1, 									//倍数
 	[Consts.RATE_TYPE.HU]: 1, 												//倍数*(玩家数-1)
 	[Consts.RATE_TYPE.BEI_HU]: -1, 											//倍数
 	[Consts.RATE_TYPE.MO_MA]: 1, 											//倍数*(玩家数-1)*马数

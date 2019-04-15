@@ -123,12 +123,16 @@ pro.exportClientResultData = function () {
 	var data = {};
 
 	data.mid = this.mid;
+	data.nick = this.nick;
+	data.head_url = this.head_url;
 	data.gold = this.gold;
 	data.diamond = this.diamond;
 
+	data.extraCards = utils.clone(this.extraCards);
 	data.handCards = utils.clone(this.handCards);
 	data.rateList = utils.clone(this.rateList);
-	data.winScore = this.winScore;
+	data.roundScore = this.roundScore;
+	data.totalScore = this.totalScore;
 
 	return data;
 };
@@ -326,14 +330,28 @@ pro.gameStart = function () {
  * @return {Void}
  */
 pro.addRateItem = function (rateItem) {
-	this.rateList.push(rateItem);
-
-	//重新计算单局赢分
 	var baseRate = this.room.roomConfig.base;
 	var totalRate = 0;
+
+	//已有该类型倍数项，直接倍数相加
+	//没有该类型倍数项，添加
+	var find = false;
 	for (var i = 0; i < this.rateList.length; i++) {
-		totalRate += this.rateList[i].rateValue;
+		var tmpRateItem = this.rateList[i];
+		if (rateItem.rateType == tmpRateItem.rateType && !find) {
+			find = true;
+			tmpRateItem.rateValue += rateItem.rateValue;
+		}
+
+		totalRate += tmpRateItem.rateValue;
 	}
+
+	if (!find) {
+		this.rateList.push(rateItem);
+		totalRate += rateItem.rateValue;
+	}
+
+	//重新计算单局赢分
 	this.roundScore = baseRate * totalRate;
 };
 

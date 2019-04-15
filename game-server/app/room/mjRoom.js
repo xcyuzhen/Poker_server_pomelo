@@ -677,6 +677,9 @@ pro.userOpeRequest = function (mid, msg, cb) {
 				break;
 			case MjConsts.OPE_TYPE.AN_GANG:
 			case MjConsts.OPE_TYPE.BU_GANG:
+				//计分类型
+				var opeRateType, outCardRateType;
+
 				if (opeType == MjConsts.OPE_TYPE.AN_GANG) {
 					//删除杠牌人手牌中对应的四张手牌
 					var delCount = 0;
@@ -689,6 +692,9 @@ pro.userOpeRequest = function (mid, msg, cb) {
 							}
 						}
 					}
+
+					opeRateType = MjConsts.RATE_TYPE.AN_GANG;
+					outCardRateType = MjConsts.RATE_TYPE.BEI_AN_GANG;
 				} else if (opeType == MjConsts.OPE_TYPE.BU_GANG) {
 					//删除杠牌人手牌中对应的一张手牌
 					for (var i = opeUserItem.handCards.length - 1; i >= 0; i--) {
@@ -706,6 +712,9 @@ pro.userOpeRequest = function (mid, msg, cb) {
 							break;
 						}
 					}
+
+					opeRateType = MjConsts.RATE_TYPE.BU_GANG;
+					outCardRateType = MjConsts.RATE_TYPE.BEI_BU_GANG;
 				}
 
 				//插入到杠牌人的吃碰杠列表
@@ -713,15 +722,13 @@ pro.userOpeRequest = function (mid, msg, cb) {
 
 				//计分
 				//杠牌玩家计分
-				var rateType = MjConsts.RATE_TYPE.ZI_GANG;
-				var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1);
-				opeUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+				var rateValue = MjConsts.RATE_CONF[opeRateType] * (self.maxPlayerNum - 1);
+				opeUserItem.addRateItem({rateType: opeRateType, rateValue: rateValue});
 				//被杠玩家计分
-				rateType = MjConsts.RATE_TYPE.BEI_ZI_GANG;
-				rateValue = MjConsts.RATE_CONF[rateType];
+				rateValue = MjConsts.RATE_CONF[outCardRateType];
 				for (var tMid in self.userList) {
 					if (tMid != mid) {
-						self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+						self.userList[tMid].addRateItem({rateType: outCardRateType, rateValue: rateValue});
 					}
 				}
 
