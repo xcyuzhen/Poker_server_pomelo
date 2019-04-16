@@ -319,7 +319,7 @@ pro.enterRoom = function (mid, isRobot) {
 					//判断房间是否已满
 					var isFull = self.isRoomFull();
 					if (isFull) {
-						self.waitToStart();
+						// self.waitToStart();
 					} else {
 						self.startReqRobotTimer();
 					}
@@ -489,18 +489,21 @@ pro.userReady = function (mid, msg, cb) {
 
 	self.updateUserSeatList();
 
-	//全部玩家已经准备，游戏开始
-	var allReady = true;
-	for (var tMid in self.userList) {
-		var userItem = self.userList[tMid];
-		if (userItem.ready == 0) {
-			allReady = false;
-			break;
+	//人数已满
+	if (self.curPlayerNum == self.maxPlayerNum) {
+		//全部玩家已经准备，游戏开始
+		var allReady = true;
+		for (var tMid in self.userList) {
+			var userItem = self.userList[tMid];
+			if (userItem.ready == 0) {
+				allReady = false;
+				break;
+			}
 		}
-	}
 
-	if (allReady) {
-		self.gameStart();
+		if (allReady) {
+			self.gameStart();
+		}
 	}
 };
 
@@ -915,13 +918,6 @@ pro.waitToStart = function () {
 pro.gameStart = function () {
 	var self = this;
 
-	self.resetGameData();
-
-	for (var tMid in self.userList) {
-		var userItem = self.userList[tMid];
-		userItem.gameStart();
-	}
-
 	//确定庄家
 	self.zhuangSeatID += 1;
 	if (self.zhuangSeatID > self.maxPlayerNum) {
@@ -1093,6 +1089,13 @@ pro.roundResult = function (huMid, huCard) {
 		},
 	};
 	self.broadCastMsg(param);
+
+	//清理工作
+	self.resetGameData();
+	for (var tMid in self.userList) {
+		self.userList[tMid].resetGameData();
+	}
+	self.updateUserSeatList();
 };
 /////////////////////////////////////牌局流程end/////////////////////////////////////
 

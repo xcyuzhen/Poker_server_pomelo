@@ -21,7 +21,6 @@ var UserItem = function (room, data) {
 
 	//玩家牌局数据
 	this.handCards = []; 									//手牌列表
-	this.staHandCards = {}; 								//手牌统计
 	this.outCards = []; 									//出牌列表
 	this.extraCards = []; 									//吃碰杠牌的列表
 	this.tingList = []; 									//听牌列表
@@ -33,6 +32,7 @@ var UserItem = function (room, data) {
 
 	this.timeoutID = null; 									//延时定时器
 	this.intervalID = null; 								//循环计时ID
+	this.readyTimeoutID = null; 							//准备延时定时器
 	this.leaveRoomTimeoutID = null; 						//离开房间延时定时器
 };
 
@@ -154,10 +154,6 @@ pro.onSocketMsg = function (param) {
 			self.aiUpdataUserList(res);
 
 			break;
-		case SocketCmd.WAIT_USER_READY:
-			self.aiWaitUserReady(res);
-
-			break;
 		case SocketCmd.ROUND_INFO:
 			self.aiRoundInfo(res);
 
@@ -215,12 +211,15 @@ pro.aiUpdataUserList = function (res) {
 		}
 	} else {
 		self.clearLeaveRoomTimeoutTimer();
-	}
 
-	//如果房间人数不满，清除延时定时器定时器
-	var isRoomFull = self.room.isRoomFull();
-	if (!isRoomFull) {
-		self.clearTimeoutTimer();
+		//如果自己没有准备，延时准备
+		if (self.ready == 0 && !self.readyTimeoutID) {
+			var delayTime = utils.randomNum(MjConsts.ROBOT.AutoReadyTime.Min, MjConsts.ROBOT.AutoReadyTime.Max);
+
+			self.readyTimeoutID = setTimeout(function () {
+				self.room.userReady(self.mid);
+			}, delayTime);
+		}
 	}
 };
 
@@ -305,23 +304,6 @@ pro.aiOutCard = function () {
     });
 }
 ///////////////////////////////////////////////ai操作end///////////////////////////////////////////////
-
-/**
- * 游戏开始
- *
- * @return {Void}
- */
-pro.gameStart = function () {
-	//清空单局游戏数据
-	this.handCards = [];
-	this.staHandCards = {};
-	this.outCards = [];
-	this.extraCards = [];
-	this.tingList = [];
-
-	this.rateList = [];
-	this.roundScore = 0;
-};
 
 /**
  * 添加倍数项
@@ -465,6 +447,22 @@ pro.checkHuPai = function () {
 };
 
 /**
+ * 重置游戏数据
+ *
+ * @return {Void}
+*/
+pro.resetGameData = function () {
+	this.ready = 0,
+	this.handCards = [];
+	this.outCards = [];
+	this.extraCards = [];
+	this.tingList = [];
+
+	this.rateList = [];
+	this.roundScore = 0;
+};
+
+/**
  * 开始延时定时器
  *
  * @param  	{Number}   	time 			延时时间
@@ -502,6 +500,18 @@ pro.clearIntervalTimer = function () {
 };
 
 /**
+ * 清除准备延时定时器
+ *
+ * @return {Void}
+*/
+pro.clearReadyTimeoutTimer = function () {
+	if (this.readyTimeoutID) {
+		clearTimeout(this.readyTimeoutID);
+		this.readyTimeoutID = null;
+	}
+};
+
+/**
  * 清除离开房间延时定时器
  *
  * @return {Void}
@@ -521,6 +531,7 @@ pro.clearLeaveRoomTimeoutTimer = function () {
 pro.clean = function () {
 	this.clearTimeoutTimer();
 	this.clearIntervalTimer();
+	this.clearReadyTimeoutTimer();
 	this.clearLeaveRoomTimeoutTimer();
 };
 
