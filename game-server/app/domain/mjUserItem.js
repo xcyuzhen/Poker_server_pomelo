@@ -213,12 +213,16 @@ pro.aiUpdataUserList = function (res) {
 		self.clearLeaveRoomTimeoutTimer();
 
 		//如果自己没有准备，延时准备
-		if (self.ready == 0 && !self.readyTimeoutID) {
-			var delayTime = utils.randomNum(MjConsts.ROBOT.AutoReadyTime.Min, MjConsts.ROBOT.AutoReadyTime.Max);
+		if (self.ready == 0) {
+			if (!self.readyTimeoutID) {
+				var delayTime = utils.randomNum(MjConsts.ROBOT.AutoReadyTime.Min, MjConsts.ROBOT.AutoReadyTime.Max);
 
-			self.readyTimeoutID = setTimeout(function () {
-				self.room.userReady(self.mid);
-			}, delayTime);
+				self.readyTimeoutID = setTimeout(function () {
+					self.room.userReady(self.mid);
+				}, delayTime);
+			}
+		} else {
+			self.clearReadyTimeoutTimer();
 		}
 	}
 };
