@@ -951,7 +951,8 @@ pro.faPai = function () {
 	var self = this;
 	var cardsNum = 13;
 
-	for (var tMid in self.userList) {
+	for (var seatID = 1; seatID <= self.maxPlayerNum; seatID ++) {
+		var tMid = self.seatMidMap[seatID];
 		var userItem = self.userList[tMid];
 		var cardList = self.cardList.splice(-cardsNum, cardsNum);
 		userItem.handCards = cardList;
@@ -1055,18 +1056,20 @@ pro.roundResult = function (huMid, huCard) {
 			}
 		}
 
-		//摸马计分
-		//胡牌玩家计分
-		var huUserItem = self.userList[huMid];
-		var rateType = MjConsts.RATE_TYPE.MO_MA;
-		var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1) * zhongNum;
-		huUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
-		//被胡玩家计分
-		rateType = MjConsts.RATE_TYPE.BEI_MA;
-		rateValue = MjConsts.RATE_CONF[rateType] * zhongNum;
-		for (var tMid in self.userList) {
-			if (tMid != huMid) {
-				self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+		if (zhongNum > 0) {
+			//摸马计分
+			//胡牌玩家计分
+			var huUserItem = self.userList[huMid];
+			var rateType = MjConsts.RATE_TYPE.MO_MA;
+			var rateValue = MjConsts.RATE_CONF[rateType] * (self.maxPlayerNum - 1) * zhongNum;
+			huUserItem.addRateItem({rateType: rateType, rateValue: rateValue});
+			//被胡玩家计分
+			rateType = MjConsts.RATE_TYPE.BEI_MA;
+			rateValue = MjConsts.RATE_CONF[rateType] * zhongNum;
+			for (var tMid in self.userList) {
+				if (tMid != huMid) {
+					self.userList[tMid].addRateItem({rateType: rateType, rateValue: rateValue});
+				}
 			}
 		}
 	}
@@ -1102,13 +1105,57 @@ pro.roundResult = function (huMid, huCard) {
 /////////////////////////////////////功能函数begin/////////////////////////////////////
 //洗牌
 pro.shuffle = function () {
+	var handCardNum = 13;
 	var tmpCardList = utils.clone(MjConsts.CARD_LIST);
 	this.cardList = [];
 
+	//配牌(1号位置)
+	// var preCardList = [0,0,0,1,1,1,2,2,2,3,3,3,4];
+	var preCardList = [];
+
+	//抓牌列表(发完牌后的抓牌列表)
+	// var dragCardList = [0,4];
+	var dragCardList = [];
+
+	//将配牌从牌盒中删除
+	for (var i = preCardList.length-1; i >= 0; i--) {
+		var delCard = preCardList[i];
+		for (var j = tmpCardList.length-1; j >= 0; j--) {
+			if (delCard == tmpCardList[j]) {
+				tmpCardList.splice(j, 1);
+				break;
+			}
+		}
+	}
+
+	//抓牌从牌盒中删除
+	for (var i = dragCardList.length-1; i >= 0; i--) {
+		var delCard = dragCardList[i];
+		for (var j = tmpCardList.length-1; j >= 0; j--) {
+			if (delCard == tmpCardList[j]) {
+				tmpCardList.splice(j, 1);
+				break;
+			}
+		}
+	}
+
+	//剩下的牌打乱顺序
 	while (tmpCardList.length > 0) {
 		var random = utils.randomNum(0, (tmpCardList.length - 1));
 		var card = tmpCardList.splice(random, 1)[0];
 		this.cardList.push(card);
+	}
+
+	//插入抓牌
+	for (var i = dragCardList.length-1; i >= 0; i--) {
+		var addCard = dragCardList[i];
+		this.cardList.splice((-3*handCardNum), 0, addCard);
+	}
+
+	//插入配牌
+	for (var i = preCardList.length-1; i >= 0; i--) {
+		var addCard = preCardList[i];
+		this.cardList.push(addCard);
 	}
 };
 
