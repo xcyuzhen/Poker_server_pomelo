@@ -5,11 +5,12 @@
             {"id":"connector-server-2", "host":"127.0.0.1", "port":4051, "clientPort": 3051, "frontend": true},
             {"id":"connector-server-3", "host":"127.0.0.1", "port":4052, "clientPort": 3052, "frontend": true}
         ],
-        "ddz":[
-            {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
-        ],
         "mj":[
-            {"id":"mj-server-1", "host":"127.0.0.1", "port":7250}
+            {"id":"mj-server-110-1", "host":"127.0.0.1", "port":7250},
+            {"id":"mj-server-110-2", "host":"127.0.0.1", "port":7251},
+            {"id":"mj-server-120-1", "host":"127.0.0.1", "port":7252},
+            {"id":"mj-server-130-1", "host":"127.0.0.1", "port":7253},
+            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
@@ -29,11 +30,12 @@
             {"id":"chat-server-2", "host":"127.0.0.1", "port":6051},
             {"id":"chat-server-3", "host":"127.0.0.1", "port":6052}
         ],
-        "ddz":[
-            {"id":"ddz-server-1", "host":"127.0.0.1", "port":7150}
-        ],
         "mj":[
-            {"id":"mj-server-1", "host":"127.0.0.1", "port":7250}
+            {"id":"mj-server-110-1", "host":"127.0.0.1", "port":7250},
+            {"id":"mj-server-110-2", "host":"127.0.0.1", "port":7251},
+            {"id":"mj-server-120-1", "host":"127.0.0.1", "port":7252},
+            {"id":"mj-server-130-1", "host":"127.0.0.1", "port":7253},
+            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}

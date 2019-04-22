@@ -1,5 +1,17 @@
 var utils = module.exports;
 
+/**
+ * 根据serverID获取场次
+ */
+utils.getGroupLevelByServerID = function (serverID) {
+    if (typeof(serverID) == "string") {
+        var arr = serverID.split("-");
+        if (arr.length >= 3) {
+            return parseInt(arr[2]);
+        }
+    }
+};
+
 var print_r;
 print_r = function (obj, indent) {
   if (typeof(obj) === "function") {
@@ -112,18 +124,16 @@ function getLineNumber(stack){
 }
 
 utils.debugTrace = function() {
-    if (isPrintFlag) {
-        var len = arguments.length;
-        if(len <= 0) {
-            return;
-        }
-        var stack = getStack();
-        var aimStr = '\'' + getFileName(stack) + '\' @' + getLineNumber(stack) + ' :\n';
-        for(var i = 0; i < len; ++i) {
-            aimStr += arguments[i] + ' ';
-        }
-        console.log('\n' + aimStr);
+    var len = arguments.length;
+    if(len <= 0) {
+        return;
     }
+    var stack = getStack();
+    var aimStr = '\'' + getFileName(stack) + '\' @' + getLineNumber(stack) + ' :\n';
+    for(var i = 0; i < len; ++i) {
+        aimStr += arguments[i] + ' ';
+    }
+    console.log('\n' + aimStr);
 };
 
 utils.randomNum = function (minNum, maxNum){

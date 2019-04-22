@@ -32,19 +32,42 @@ pro.start = function(cb) {
 	process.nextTick(cb);
 };
 
+//服务器是否满员
+pro.getServerFullStatus = function (msg, cb) {
+	var self = this;
+
+	var hasEmptyRoomNum = self.roomList.length > 0;
+	if (hasEmptyRoomNum) {
+		utils.invokeCallback(cb, null, {canEnterRoom: true, hasEmptyRoomNum: hasEmptyRoomNum});
+		return;
+	}
+
+	//查找等待开局的房间列表;
+	for(var i = 0, len = self.readyRoomList.length; i < len; i++){
+		var tmpRoom = self.readyRoomList[i];
+		var roomLevel = tmpRoom.getGroupLevel();
+		if (roomLevel == level && (!tmpRoom.isRoomFull())) {
+			utils.invokeCallback(cb, null, {canEnterRoom: true, hasEmptyRoomNum: hasEmptyRoomNum});
+			break;
+		}
+	}
+
+	utils.invokeCallback(cb, null, {canEnterRoom: false, hasEmptyRoomNum: hasEmptyRoomNum});
+};
+
 //初始化游戏配置
 pro.initGameConfig = function (gameConfig) {
 	this.gameConfig = gameConfig;
-}
+};
 
 //初始化房间
 pro.initRooms = function (RoomObj) {
 	for (var i = 1; i <= Consts.ROOM_SERVICE.ROOM_NUM; i++)
 	{ 
-	    var room = new RoomObj(this.app, {roomIndex: i});
+	    var room = new RoomObj(this.app, {roomIndex: i, gameConfig:this.gameConfig});
 	    this.roomList.push(room);
 	}
-}
+};
 
 //回收房间
 pro.recycleRoom = function (roomIndex) {
@@ -66,7 +89,7 @@ pro.recycleRoom = function (roomIndex) {
 			return;
 		}
 	}
-}
+};
 
 //玩家离线
 pro.userOffline = function (mid, cb) {
@@ -132,34 +155,16 @@ pro.commonRoomMsgHandler = function (mid, msg, cb) {
 pro.enterGroupLevel = function (mid, msg, cb) {
 	console.log("玩家请求进入房间 mid = ", mid);
 	var self = this;
-	var level = msg.level;
-
-	//找到场次配置
-	var config;
-	var groupConfig = self.gameConfig.groupList;
-	for(var i = 0, len = groupConfig.length; i < len; i++){
-		var tmpConfig = groupConfig[i];
-		if (tmpConfig.level == level) {
-			config = tmpConfig;
-			break;
-		}
-	}
-
-	if (!config) {
-		logger.error('没有找到场次配置 level = ' + level);
-		utils.invokeCallback(cb);
-		return;
-	}
 
 	//redis中读取玩家信息
 	redisUtil.getCommonUserData(mid, function (err, userData) {
 		if (!err) {
 			//判断玩家金币数量是否符合要求
 			var userGoldNum = userData.gold;
-			if (userGoldNum < config.limitMin) {
+			if (userGoldNum < self.gameConfig.limitMin) {
 				utils.invokeCallback(cb, null, {code: Code.ROOM.GOLD_NOT_ENOUGH, msg:"金币低于本场次下限"});
 				return;
-			} else if (userGoldNum > config.limitMax) {
+			} else if (userGoldNum > self.gameConfig.limitMax) {
 				utils.invokeCallback(cb, null, {code: Code.ROOM.GOLD_MORE_ENOUGH, msg:"金币高于本场次上限"});
 				return;
 			} else {
@@ -170,7 +175,7 @@ pro.enterGroupLevel = function (mid, msg, cb) {
 				for(var i = 0, len = self.readyRoomList.length; i < len; i++){
 					var tmpRoom = self.readyRoomList[i];
 					var roomLevel = tmpRoom.getGroupLevel();
-					if (roomLevel == level && (!tmpRoom.isRoomFull)) {
+					if (roomLevel == level && (!tmpRoom.isRoomFull())) {
 						room = tmpRoom;
 						break;
 					}
@@ -181,7 +186,7 @@ pro.enterGroupLevel = function (mid, msg, cb) {
 					var emptyRoom = self.roomList.splice(0, 1)[0];
 
 					//初始化空房间
-					emptyRoom.initRoom(config);
+					emptyRoom.initRoom(self.gameConfig);
 
 					//将房间添加进正在等待开局房间列表
 					self.readyRoomList.push(emptyRoom);

@@ -27,7 +27,7 @@ var getDefaultUserData = function () {
 		diamond: 0, 								//钻石数量
 		head_url: "", 								//头像
 		gameServerType: "",							//当前所在游戏服务器类型
-		gameServerID: "", 							//当前所在游戏服务器ID ""-没有在游戏中 "ddz-server-1"-服务器ID
+		gameServerID: "", 							//当前所在游戏服务器ID ""-没有在游戏中 "mj-server-1"-服务器ID
 		state: 0,   								//当前状态 0-大厅 1-匹配中 2-在房间
 	};
 

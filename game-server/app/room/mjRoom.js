@@ -14,12 +14,12 @@ var Room = function (app, opts) {
 	this.channelService = app.get("channelService");
 	this.roomMgrService = app.get("roomMgrService");
 	opts = opts || {};
+	this.gameConfig = opts.gameConfig;								//房间配置
 	this.roomIndex = opts.roomIndex || 0;
 	this.roomState = Consts.ROOM.STATE.UN_INITED;					//当前房间状态
 	this.userList = {}; 											//玩家列表
 	this.seatMidMap = {}; 											//座位号和mid的映射表
 	this.channel = null; 											//channel
-	this.roomConfig = null; 										//房间配置
 
 	this.timeoutID = null; 											//房间延时ID
 	this.intervalID = null; 										//循环计时ID
@@ -28,14 +28,10 @@ var Room = function (app, opts) {
 var pro = Room.prototype;
 
 //初始化房间
-pro.initRoom = function (roomConfig) {
-	this.roomConfig = roomConfig;
-
+pro.initRoom = function () {
 	//生成房间号
-	var level = roomConfig.level
-	var serverID = this.app.getServerId();
-	var serverFlag = GameConfig.gameServerFlag[serverID]
-	var roomNum = (level + serverFlag) * 100000 + this.roomIndex;
+	var level = this.gameConfig.level
+	var roomNum = this.roomIndex;
 
 	//初始化房间数据
 	this.level = level;
@@ -1290,8 +1286,8 @@ pro.startReqRobotTimer = function () {
 	logger.info("开启timeout定时器，请求机器人进入房间");
 	self.startTimeoutTimer(function () {
 		var param = {
-			minGold: self.roomConfig.limitMin,
-			maxGold: self.roomConfig.limitMax,
+			minGold: self.gameConfig.limitMin,
+			maxGold: self.gameConfig.limitMax,
 		};
 
 		self.app.rpc.auth.robotRemote.reqOneRobot({}, param, function (err, resp) {
@@ -1369,7 +1365,6 @@ pro.clearRoom = function () {
 	this.channelService.destroyChannel(this.roomNum);
 
 	//清空数据
-	this.roomConfig = null;
 	this.channel = null;
 	this.userList = {};
 	

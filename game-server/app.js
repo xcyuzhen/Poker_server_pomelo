@@ -45,16 +45,11 @@ app.configure('production|development', "auth", function () {
 	app.load(robotMgr);
 });
 
-app.configure('production|development', "auth|connector|ddz|mj", function () {
+app.configure('production|development', "auth|connector|mj", function () {
 	app.loadConfig("redisConfig", app.getBase() + "/config/redis.json");
     var redisClient = require("./app/util/redisUtil").create();
     app.set("redisClient", redisClient);
 });
-
-app.configure('production|development', "ddz", function () {
-	var ddzRoomMgr = require('./app/components/ddzRoomMgr');
-	app.load(ddzRoomMgr);
-})
 
 app.configure('production|development', "mj", function () {
 	var mjRoomMgr = require('./app/components/mjRoomMgr');
