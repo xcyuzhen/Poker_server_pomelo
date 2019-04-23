@@ -48,11 +48,11 @@ pro.afterStart = function (cb) {
     //根据serverID找到游戏配置
     var serverID = this.app.getServerId();
     var groupLevel = utils.getGroupLevelByServerID(serverID);
-    var gameList = GameConfig.gameList[0];
+    var groupList = GameConfig.gameList[0].groupList;
     var config;
-    for (var i = 0; i < gameList.length; i++) {
-        if (groupLevel == gameList[i].level) {
-            config = gameList[i];
+    for (var i = 0; i < groupList.length; i++) {
+        if (groupLevel == groupList[i].level) {
+            config = groupList[i];
             break;
         }
     }

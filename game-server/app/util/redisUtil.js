@@ -6,7 +6,7 @@ var async = require('async');
 
 var redisUtil = module.exports;
 
-var USER_DATA_FIELD_ALL = ["mid", "nick", "sex", "gold", "diamond", "head_url", "gameServerType", "gameServerID", "state", "sid"];
+var USER_DATA_FIELD_ALL = ["mid", "nick", "sex", "gold", "diamond", "head_url", "gameServerType", "gameServerID", "roomNum", "state", "sid"];
 var USER_DATA_FIELD_COMMON = ["mid", "nick", "sex", "gold", "diamond", "head_url"];
 
 var getKeyByMid = function (mid) {
@@ -28,6 +28,7 @@ var getDefaultUserData = function () {
 		head_url: "", 								//头像
 		gameServerType: "",							//当前所在游戏服务器类型
 		gameServerID: "", 							//当前所在游戏服务器ID ""-没有在游戏中 "mj-server-1"-服务器ID
+		roomNum: "", 								//当前所在游戏房间号
 		state: 0,   								//当前状态 0-大厅 1-匹配中 2-在房间
 	};
 
@@ -265,11 +266,12 @@ redisUtil.logout = function (mid, cb) {
  * @param  {Number}   	mid 			玩家id
  * @param  {String}   	serverType 		服务器类型
  * @param  {String}   	serverID 		服务器ID
+ * @param  {Number}   	roomNum 		房间号
  * @param  {Function} 	cb 				回调
  * @return {Void}
  */
-redisUtil.enterRoom = function (mid, serverType, serverID, cb) {
-	redisUtil.setUserData({mid: mid, gameServerType: serverType, gameServerID: serverID, state: 2}, false, cb);
+redisUtil.enterRoom = function (mid, serverType, serverID, roomNum, cb) {
+	redisUtil.setUserData({mid: mid, gameServerType: serverType, gameServerID: serverID, roomNum: roomNum, state: 2}, false, cb);
 };
 
 /**
@@ -280,6 +282,6 @@ redisUtil.enterRoom = function (mid, serverType, serverID, cb) {
  * @return {Void}
  */
 redisUtil.leaveRoom = function (mid, cb) {
-	redisUtil.setUserData({mid: mid, gameServerType: "", gameServerID: "", state: 0}, false, cb);
+	redisUtil.setUserData({mid: mid, gameServerType: "", gameServerID: "", roomNum: "", state: 0}, false, cb);
 };
 ////////////////////////////////////玩家行为end////////////////////////////////////

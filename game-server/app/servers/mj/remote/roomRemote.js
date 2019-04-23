@@ -12,9 +12,9 @@ var Remote = function(app) {
 var pro = Remote.prototype;
 
 //检测服务器是否满员
-pro.isServerFull = function (msg, cb) (
-	this.roomMgrService.isServerFull(msg, cb);
-);
+pro.getServerFullStatus = function (msg, cb) {
+	this.roomMgrService.getServerFullStatus(msg, cb);
+};
 
 pro.socketMsg = function (mid, msg, cb) {
 	this.roomMgrService.socketMsg(mid, msg, cb);

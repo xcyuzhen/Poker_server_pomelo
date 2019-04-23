@@ -109,19 +109,12 @@ pro.userOffline = function (mid, cb) {
 /////////////////////////////////////功能函数begin/////////////////////////////////////
 //查找用户所在房间
 var getRoomByMid = function (mid) {
-	console.log("开始查找玩家所在房间");
-
-	//遍历人数已经满的房间
 	for (var roomNum in this.roomMap) {
-		console.log("查找房间号：", roomNum);
 		var tmpRoom = this.roomMap[roomNum];
 		if (tmpRoom.isUserInRoom(mid)) {
-			console.log("找到玩家所在房间");
 	    	return tmpRoom;
 	    }
 	}
-
-	return null;
 };
 /////////////////////////////////////功能函数end/////////////////////////////////////
 

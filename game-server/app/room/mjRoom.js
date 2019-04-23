@@ -224,7 +224,7 @@ pro.enterRoom = function (mid, isRobot) {
 	self.clearTimeoutTimer();
 
 	//修改redis中玩家的状态
-	redisUtil.setUserData({mid: mid, gameServerType: self.app.getServerType(), gameServerID: self.app.getServerId(), state: 2}, false, function (err) {
+	redisUtil.enterRoom(mid, self.app.getServerType(), self.app.getServerId(), self.roomNum, function (err) {
 		if (err) {
 			logger.error("mjRoom.enterRoom error");
 		} else {

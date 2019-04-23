@@ -39,10 +39,11 @@ exp.mj = function(session, msg, app, cb) {
 		return;
 	}
 
-	var level = parseInt(msg.level);
+	var param = msg.args[1];
+	var level = parseInt(param.level);
 	var serverList = [];
 	for (var i = 0; i < mjServers.length; i++) {
-		var serverID = mjServers[i];
+		var serverID = mjServers[i].id;
 		if (level == utils.getGroupLevelByServerID(serverID)) {
 			serverList.push(serverID);
 		}
@@ -53,7 +54,18 @@ exp.mj = function(session, msg, app, cb) {
 		return;
 	}
 
-	//开始检测
+	//排序
+	serverList.sort(function (a, b) {
+		if (a < b) {
+			return -1;
+		} else if (a > b) {
+			return 1;
+		} else {
+			return 0;
+		}
+	});
+
+	//开始检测可以进入哪个服务器
 	var find = false;
 	async.forEachSeries(serverList, function (serverID, callBack) {
 		if (find) {
@@ -61,7 +73,7 @@ exp.mj = function(session, msg, app, cb) {
 		} else {
 			app.rpc[serverName].roomRemote.getServerFullStatus.toServer(serverID, {}, function (err, res) {
 				if (!err) {
-					if (res === false) {
+					if (!!res.canEnterRoom) {
 						find = true;
 						cb(null, serverID);
 					}
