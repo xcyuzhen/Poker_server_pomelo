@@ -16,11 +16,11 @@ pro.getServerFullStatus = function (msg, cb) {
 	this.roomMgrService.getServerFullStatus(msg, cb);
 };
 
-pro.socketMsg = function (mid, msg, cb) {
-	this.roomMgrService.socketMsg(mid, msg, cb);
+pro.socketMsg = function (mid, msg, roomNum, cb) {
+	this.roomMgrService.socketMsg(mid, msg, roomNum, cb);
 };
 
 //玩家离线
-pro.userOffline = function (mid, cb) {
-	this.roomMgrService.userOffline(mid, cb);
+pro.userOffline = function (mid, roomNum, cb) {
+	this.roomMgrService.userOffline(mid, roomNum, cb);
 };

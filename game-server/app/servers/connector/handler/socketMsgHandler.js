@@ -1,6 +1,7 @@
 var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var SocketCmd = require('../../../models/socketCmd');
 var GameConfig = require('../../../models/gameConfig');
+var ClientGameList = require('../../../models/clientGameList');
 var utils = require('../../../util/utils');
 var Code = require('../../../../../shared/code');
 var redisUtil = require("../../../util/redisUtil");
@@ -61,7 +62,7 @@ var login = function(msg, session, next) {
 			next(null, {
 				code: Code.OK,
 				userData: res,
-				gameList: GameConfig.gameList
+				gameList: ClientGameList,
 			});
 		}
 	});
@@ -94,7 +95,7 @@ var enterGroupLevel = function (msg, session, next) {
 				redisUtil.requestEnterGroupLevel(mid);
 
 				//玩家在大厅，进入游戏服务器进行匹配
-				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, msg, function (err, res) {
+				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, "", msg, function (err, res) {
 					if (err || (res && res.code !== Code.OK)) {
 						redisUtil.leaveRoom(mid);
 					}
@@ -113,7 +114,7 @@ var commonRoomMsg = function (msg, session, next) {
 	logger.info("收到玩家 " + mid + " 的房间消息, cmd = " + msg.socketCmd);
 
 	//从redis中拿该用户的游戏服务器，进行消息转发
-	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID"], function (err, resp) {
+	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID", "roomNum"], function (err, resp) {
 		if (err) {
 			next(err);
 		} else {
@@ -121,7 +122,7 @@ var commonRoomMsg = function (msg, session, next) {
 				logger.info("玩家 " + mid + " 所在的游戏服务器类型为 " + resp[0] + ", ID为 " + resp[1]);
 
 				//转发消息
-				self.app.rpc[resp[0]].roomRemote.socketMsg.toServer(resp[1], mid, msg, function (err, data) {
+				self.app.rpc[resp[0]].roomRemote.socketMsg.toServer(resp[1], mid, resp[2], msg, function (err, data) {
 					console.log("请求处理完成返回, cmd = ", msg.socketCmd);
 					data = data || {code: Code.OK};
 					next(err, data);

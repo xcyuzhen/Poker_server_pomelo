@@ -39,7 +39,7 @@ exp.mj = function(session, msg, app, cb) {
 		return;
 	}
 
-	var param = msg.args[1];
+	var param = msg.args[2];
 	var level = parseInt(param.level);
 	var serverList = [];
 	for (var i = 0; i < mjServers.length; i++) {

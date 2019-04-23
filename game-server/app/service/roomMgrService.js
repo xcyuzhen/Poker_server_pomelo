@@ -119,24 +119,24 @@ var getRoomByMid = function (mid) {
 /////////////////////////////////////功能函数end/////////////////////////////////////
 
 /////////////////////////////////////协议处理相关begin/////////////////////////////////////
-pro.socketMsg = function (mid, msg, cb) {
+pro.socketMsg = function (mid, roomNum, msg, cb) {
 	var self = this;
 
 	var msgSocketCmd = msg.socketCmd;
 	var processerFun = socketCmdConfig[msgSocketCmd];
 	if (!! processerFun && self[processerFun]) {
-		self[processerFun](mid, msg, cb);
+		self[processerFun](mid, roomNum, msg, cb);
 	} else {
 		//通用处理
-		self.commonRoomMsgHandler(mid, msg, cb);
+		self.commonRoomMsgHandler(mid, roomNum, msg, cb);
 	}
 };
 
 //通用房间消息处理函数
-pro.commonRoomMsgHandler = function (mid, msg, cb) {
+pro.commonRoomMsgHandler = function (mid, roomNum, msg, cb) {
 	var self = this;
 
-	var room = getRoomByMid.call(self, mid);
+	var room = self.roomMap[roomNum] || getRoomByMid.call(self, mid);
 	if (!!room) {
 		room.commonRoomMsgHandler(mid, msg, cb);
 	} else {
@@ -145,7 +145,7 @@ pro.commonRoomMsgHandler = function (mid, msg, cb) {
 };
 
 //请求加入场次
-pro.enterGroupLevel = function (mid, msg, cb) {
+pro.enterGroupLevel = function (mid, roomNum, msg, cb) {
 	console.log("玩家请求进入房间 mid = ", mid);
 	var self = this;
 
@@ -185,7 +185,7 @@ pro.enterGroupLevel = function (mid, msg, cb) {
 					self.readyRoomList.push(emptyRoom);
 
 					//将房间添加进roomMap
-					var roomNum = emptyRoom.getRoomNumber();
+					roomNum = emptyRoom.getRoomNumber();
 					self.roomMap[roomNum] = emptyRoom;
 
 					console.log("创建新房间，准备进入，roomNum = ", roomNum)
@@ -203,12 +203,12 @@ pro.enterGroupLevel = function (mid, msg, cb) {
 };
 
 //请求退出房间
-pro.userLeave = function (mid, msg, cb) {
+pro.userLeave = function (mid, roomNum, msg, cb) {
 	var self = this;
 
 	console.log("玩家" + mid + "，申请离开房间");
 	//找到玩家所在房间，离开房间操作在房间内完成
-	var room = getRoomByMid.call(self, mid);
+	var room = self.roomMap[roomNum] || getRoomByMid.call(self, mid);
 	if (!!room) {
 		room.leaveRoom(mid, cb);
 	} else {

@@ -73,13 +73,13 @@ pro.userOffline = function (mid, sid, cb) {
 	var channel = this.channelService.getChannel("Hall", true);
 	channel.leave(mid, sid);
 
-	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID"], function (err, resp) {
+	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID", "roomNum"], function (err, resp) {
 		if (!err) {
 			utils.printObj(resp);
 
 			if (resp[1] != undefined && resp[1] != "") {
 				//玩家在游戏中，远程调用到房间逻辑
-				self.app.rpc[resp[0]].roomRemote.userOffline.toServer(resp[1], mid, null);
+				self.app.rpc[resp[0]].roomRemote.userOffline.toServer(resp[1], mid, resp[2], null);
 			} else {
 				//玩家不在游戏中，删除redis中该玩家信息
 				redisUtil.logout(mid);
