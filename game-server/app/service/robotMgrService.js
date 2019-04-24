@@ -6,7 +6,7 @@ var robotDao = require('../dao/robotDao');
 /**
  * 机器人管理服务.
  *
- * RobotMgrService is created by roomMgr component
+ * RobotMgrService is created by robotMgr component
  * component of pomelo and robotMgr service would be accessed by `app.get('RobotMgrService')`.
  *
  * @class
@@ -17,6 +17,8 @@ var RobotMgrService = function(app, opts) {
     this.app = app;
     this.robotsList = [];
     this.reqMsgList = [];
+
+    this.reqHandling = false;
 };
 
 module.exports = RobotMgrService;
@@ -110,38 +112,55 @@ pro.getMoreRobotsFromDB = function (cb) {
 pro.reqOneRobot = function (param, cb) {
 	var self = this;
 
-	var minGold = param.minGold || 0;
-	var maxGold = param.maxGold || 99999999;
-
-	var resultMid;
-	for (var i = self.robotsList.length - 1; i >= 0; i--) {
-		var robotItem = self.robotsList[i];
-		var gold = robotItem.gold;
-		if (robotItem.inUse === 0 && gold >= minGold && gold <= maxGold) {
-			robotItem.inUse = 1;
-			resultMid = robotItem.mid;
-			break;
-		}
-	}
-
-	if (resultMid) {
-		//找到了可用的机器人
-		logger.info("找到了可用的机器人");
-
-		utils.invokeCallback(cb, null, resultMid);
+	if (self.reqHandling) {
+		self.reqMsgList.push({param: param, cb: cb});
 	} else {
-		//没有了可用的机器人
-		logger.info("当前没有可用机器人，去数据库加载更多");
-		self.getMoreRobotsFromDB(function (err, resp) {
-			if (!err) {
-				if (resp.length === 0) {
-					logger.info("全部搜索完毕，没有更多机器人");
-					utils.invokeCallback(cb, null, null);
-				} else {
-					self.reqOneRobot(param, cb)
-				}
+		self.reqHandling = true;
+
+		var minGold = param.minGold || 0;
+		var maxGold = param.maxGold || 99999999;
+
+		var resultMid;
+		for (var i = self.robotsList.length - 1; i >= 0; i--) {
+			var robotItem = self.robotsList[i];
+			var gold = robotItem.gold;
+			if (robotItem.inUse === 0 && gold >= minGold && gold <= maxGold) {
+				robotItem.inUse = 1;
+				resultMid = robotItem.mid;
+				break;
 			}
-		});
+		}
+
+		var endCallBack = function () {
+			self.reqHandling = false;
+			if (self.reqMsgList.length > 0) {
+				var req = self.reqMsgList.splice(0, 1)[0];
+				self.reqOneRobot(req.param, req.cb);
+			}
+		};
+
+		if (resultMid) {
+			//找到了可用的机器人
+			logger.info("找到了可用的机器人");
+
+			utils.invokeCallback(cb, null, resultMid);
+			endCallBack();
+		} else {
+			//没有了可用的机器人
+			logger.info("当前没有可用机器人，去数据库加载更多");
+			self.getMoreRobotsFromDB(function (err, resp) {
+				if (!err) {
+					if (resp.length === 0) {
+						logger.info("全部搜索完毕，没有更多机器人");
+						utils.invokeCallback(cb, null, null);
+						endCallBack();
+					} else {
+						self.reqHandling = false;
+						self.reqOneRobot(param, cb)
+					}
+				}
+			});
+		}
 	}
 };
 

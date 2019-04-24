@@ -148,4 +148,4 @@ utils.randomNum = function (minNum, maxNum){
     var delta = maxNum + 1 - minNum;
 
     return Math.floor(Math.random() * delta) + minNum;
-}
+};

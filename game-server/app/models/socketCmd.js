@@ -3,6 +3,7 @@ module.exports = {
 	LOGIN: 20000, 									//登录
 	REQUEST_USER_INFO: 20001, 						//获取玩家信息
 	ENTER_GROUP_LEVEL: 20002, 						//加入场次
+	CREATE_ROOM: 20003, 							//创建房间
 
 	ENTER_ROOM: 20100, 								//进入房间
 	RELOAD_GAME: 20101, 							//断线重连

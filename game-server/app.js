@@ -44,6 +44,9 @@ app.configure('production|development', "auth", function () {
 
     var robotMgr = require('./app/components/robotMgr');
 	app.load(robotMgr);
+
+	var roomNumMgr = require('./app/components/roomNumMgr');
+	app.load(roomNumMgr);
 });
 
 app.configure('production|development', "auth|connector|mj", function () {
