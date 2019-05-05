@@ -10,7 +10,8 @@
             {"id":"mj-server-110-2", "host":"127.0.0.1", "port":7251},
             {"id":"mj-server-120-1", "host":"127.0.0.1", "port":7252},
             {"id":"mj-server-130-1", "host":"127.0.0.1", "port":7253},
-            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254}
+            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254},
+            {"id":"mj-server-150-1", "host":"127.0.0.1", "port":7255}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}
@@ -35,7 +36,8 @@
             {"id":"mj-server-110-2", "host":"127.0.0.1", "port":7251},
             {"id":"mj-server-120-1", "host":"127.0.0.1", "port":7252},
             {"id":"mj-server-130-1", "host":"127.0.0.1", "port":7253},
-            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254}
+            {"id":"mj-server-140-1", "host":"127.0.0.1", "port":7254},
+            {"id":"mj-server-150-1", "host":"127.0.0.1", "port":7255}
         ],
         "auth":[
             {"id":"auth-server-1", "host":"127.0.0.1", "port":5050}

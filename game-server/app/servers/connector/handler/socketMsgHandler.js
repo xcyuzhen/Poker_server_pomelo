@@ -2,6 +2,7 @@ var logger = require('pomelo-logger').getLogger('pomelo', __filename);
 var SocketCmd = require('../../../models/socketCmd');
 var GameConfig = require('../../../models/gameConfig');
 var ClientGameList = require('../../../models/clientGameList');
+var mjFriendGroupConfig = require("../../../models/mjFriendGroupConfig");
 var utils = require('../../../util/utils');
 var Code = require('../../../../../shared/code');
 var redisUtil = require("../../../util/redisUtil");
@@ -107,6 +108,68 @@ var enterGroupLevel = function (msg, session, next) {
 	});
 };
 
+//拉取创建房间配置
+var getCreateRoomConfig = function (msg, session, next) {
+	var self = this;
+
+	var gameType = msg.gameType;
+	if (gameType == GameConfig.gameType.mj) {
+		next(null, {
+			code: Code.OK,
+			data: mjFriendGroupConfig,
+		});
+	} else {
+		next(null, {
+			code: Code.FAIL,
+			gameType: gameType,
+			msg: "未知游戏类型",
+		});
+	}
+
+};
+
+//创建房间
+var createRoom = function (msg, session, next) {
+	var self = this;
+
+	var mid = session.uid;
+	//检查当前是否在匹配中或者游戏中
+	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
+		if (err) {
+			next(err);
+		} else {
+			if (resp[0] > 0) {
+				var errMsg;
+				if (resp[0] == 1) {
+					errMsg = "正在匹配队列中，无法创建房间！";
+				} else if (resp[0] == 2) {
+					errMsg = "已经在游戏中，无法创建房间！";
+				}
+
+				next(null, {
+					code: Code.FAIL,
+					msg: errMsg,
+				});
+			} else {
+				//修改redis中玩家状态
+				redisUtil.createRoom(mid);
+
+				var serverType = GameConfig.groupServerList[msg.gameType];
+				msg.level = GameConfig.FriendLevel[msg.gameType];
+
+				//进入游戏服务器
+				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, "", msg, function (err, res) {
+					if (err || (res && res.code !== Code.OK)) {
+						redisUtil.leaveRoom(mid);
+					}
+
+					next(err, res);
+				});
+			}
+		}
+	});
+};
+
 var commonRoomMsg = function (msg, session, next) {
 	var self = this;
 	var mid = session.uid;
@@ -153,6 +216,8 @@ handler.initSocketCmdConfig = function() {
 		[SocketCmd.LOGIN]: login,
 		[SocketCmd.REQUEST_USER_INFO]: requestUserInfo,
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
+		[SocketCmd.GET_CREATE_ROOM_CONFIG]: getCreateRoomConfig,
+		[SocketCmd.CREATE_ROOM]: createRoom,
 		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 		[SocketCmd.USER_READY]: commonRoomMsg,
 		[SocketCmd.OPE_REQ]: commonRoomMsg,

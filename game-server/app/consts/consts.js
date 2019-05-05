@@ -1,5 +1,11 @@
 var Consts = {};
 
+//好友房支付类型
+Consts.FriendRoomPayType = {
+	MasterPay: 1, 							//房主支付
+	WinnerPay: 2, 							//赢家支付
+},
+
 Consts.ROOM_SERVICE = {
 	ROOM_NUM: 100,
 },

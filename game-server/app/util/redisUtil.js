@@ -239,6 +239,17 @@ redisUtil.getUserDataByField = function (mid, fields, cb) {
 
 ////////////////////////////////////玩家行为begin////////////////////////////////////
 /**
+ * 玩家请求创建房间
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.createRoom = function (mid, cb) {
+	redisUtil.setUserData({mid: mid, state: 1}, false, cb);
+};
+
+/**
  * 玩家请求进入场次
  *
  * @param  {Number}   	mid 		玩家id
