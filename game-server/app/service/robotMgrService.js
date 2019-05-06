@@ -147,7 +147,7 @@ pro.reqOneRobot = function (param, cb) {
 			endCallBack();
 		} else {
 			//没有了可用的机器人
-			logger.info("当前没有可用机器人，去数据库加载更多");
+			logger.info("当前没有适合条件的机器人，去数据库加载更多");
 			self.getMoreRobotsFromDB(function (err, resp) {
 				if (!err) {
 					if (resp.length === 0) {

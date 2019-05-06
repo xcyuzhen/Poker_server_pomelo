@@ -80,7 +80,7 @@ pro.initRoomNumFromDB = function (cb) {
 						}
 					});
 				} else {
-					logger.info("没有更多机器人了");
+					logger.info("没有更多房间号了");
 					utils.invokeCallback(cb, err, res);
 				}
 			} else {
@@ -88,7 +88,7 @@ pro.initRoomNumFromDB = function (cb) {
 
 				//保存房间号
 				for (var i = 0; i < res.length; i++) {
-					self.roomNumList.push(res[i]);
+					self.roomNumList.push(res[i].roomNum);
 				}
 
 				utils.invokeCallback(cb, null, res);

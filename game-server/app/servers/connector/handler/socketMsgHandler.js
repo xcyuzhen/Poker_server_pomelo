@@ -109,7 +109,7 @@ var enterGroupLevel = function (msg, session, next) {
 };
 
 //拉取创建房间配置
-var getCreateRoomConfig = function (msg, session, next) {
+var getCreateFriendRoomConfig = function (msg, session, next) {
 	var self = this;
 
 	var gameType = msg.gameType;
@@ -129,7 +129,7 @@ var getCreateRoomConfig = function (msg, session, next) {
 };
 
 //创建房间
-var createRoom = function (msg, session, next) {
+var createFriendRoom = function (msg, session, next) {
 	var self = this;
 
 	var mid = session.uid;
@@ -152,7 +152,17 @@ var createRoom = function (msg, session, next) {
 				});
 			} else {
 				//修改redis中玩家状态
-				redisUtil.createRoom(mid);
+				redisUtil.createFriendRoom(mid);
+
+				if (msg.gameType == undefined) {
+					var errMsg = "gameType错误: " + msg.gameType;
+					next(null, {
+						code: Code.FAIL,
+						msg: errMsg,
+					});
+
+					return;
+				}
 
 				var serverType = GameConfig.groupServerList[msg.gameType];
 				msg.level = GameConfig.FriendLevel[msg.gameType];
@@ -216,8 +226,8 @@ handler.initSocketCmdConfig = function() {
 		[SocketCmd.LOGIN]: login,
 		[SocketCmd.REQUEST_USER_INFO]: requestUserInfo,
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
-		[SocketCmd.GET_CREATE_ROOM_CONFIG]: getCreateRoomConfig,
-		[SocketCmd.CREATE_ROOM]: createRoom,
+		[SocketCmd.GET_CREATE_FRIEND_ROOM_CONFIG]: getCreateFriendRoomConfig,
+		[SocketCmd.CREATE_FRIEND_ROOM]: createFriendRoom,
 		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 		[SocketCmd.USER_READY]: commonRoomMsg,
 		[SocketCmd.OPE_REQ]: commonRoomMsg,

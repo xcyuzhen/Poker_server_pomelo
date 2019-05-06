@@ -23,7 +23,7 @@ GameConfig.FriendLevel = {
 };
 
 //场次服务器列表
-GameConfig.groupServerList: {
+GameConfig.groupServerList = {
     [GameConfig.gameType.mj]: "mj",
 };
 

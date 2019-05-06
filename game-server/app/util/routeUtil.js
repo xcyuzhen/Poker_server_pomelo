@@ -73,7 +73,7 @@ exp.mj = function(session, msg, app, cb) {
 		} else {
 			app.rpc[serverName].roomRemote.getServerFullStatus.toServer(serverID, {}, function (err, res) {
 				if (!err) {
-					if (!!res.canEnterRoom) {
+					if (!!res.canEnter) {
 						find = true;
 						cb(null, serverID);
 					}

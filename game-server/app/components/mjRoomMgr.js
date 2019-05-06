@@ -49,6 +49,7 @@ pro.afterStart = function (cb) {
     var serverID = this.app.getServerId();
     var groupLevel = utils.getGroupLevelByServerID(serverID);
     var groupList = GameConfig.gameList[0].groupList;
+    var isFriendRoomServer = (groupLevel == GameConfig.FriendLevel[GameConfig.gameType.mj]);
     var config;
     for (var i = 0; i < groupList.length; i++) {
         if (groupLevel == groupList[i].level) {
@@ -62,7 +63,8 @@ pro.afterStart = function (cb) {
         return;
     }
 
-    this.service.initGameConfig.call(this.service, config);
-    this.service.initRooms.call(this.service, MjRoom);
+    this.service.initGameConfig(config);
+    this.service.setIsFriendRoomServer(isFriendRoomServer);
+    this.service.initRooms( MjRoom);
     process.nextTick(cb);
 }

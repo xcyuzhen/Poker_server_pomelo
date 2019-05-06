@@ -245,7 +245,7 @@ redisUtil.getUserDataByField = function (mid, fields, cb) {
  * @param  {Function} 	cb 			回调
  * @return {Void}
  */
-redisUtil.createRoom = function (mid, cb) {
+redisUtil.createFriendRoom = function (mid, cb) {
 	redisUtil.setUserData({mid: mid, state: 1}, false, cb);
 };
 
