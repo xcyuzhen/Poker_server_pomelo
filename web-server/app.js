@@ -22,6 +22,11 @@ app.configure('production', function(){
 	app.use(express.errorHandler());
 });
 
+app.all("*", function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");          //允许所有跨域请求
+    next();
+})
+
 app.get('/serverconfig', function (req, res) {
 	var serverConfig = require('./public/config/serverconfig.json');
 	res.send(JSON.stringify(serverConfig));
