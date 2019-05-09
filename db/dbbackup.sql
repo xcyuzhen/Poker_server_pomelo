@@ -92,7 +92,7 @@ CREATE TABLE `user_info` (
   UNIQUE KEY `mid_UNIQUE` (`mid`),
   UNIQUE KEY `udid_UNIQUE` (`udid`),
   UNIQUE KEY `appid_UNIQUE` (`appid`)
-) ENGINE=InnoDB AUTO_INCREMENT=10010 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=10012 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,7 +101,7 @@ CREATE TABLE `user_info` (
 
 LOCK TABLES `user_info` WRITE;
 /*!40000 ALTER TABLE `user_info` DISABLE KEYS */;
-INSERT INTO `user_info` VALUES (10000,'yuzhenudidguest1','游客10000',0,0,0,'','yuzhenudidguest1'),(10008,'yuzhenudidguest2','游客10008',0,5000,0,'','yuzhenudidguest2'),(10009,'yuzhenudidguest3','游客10009',0,0,0,'','yuzhenudidguest3');
+INSERT INTO `user_info` VALUES (10001,'yuzhenudidguest1','游客10001',0,5000,0,'','yuzhenudidguest1'),(10002,'yuzhenudidguest2','游客10002',0,5000,0,'','yuzhenudidguest2'),(10003,'yuzhenudidguest3','游客10003',0,5000,0,'','yuzhenudidguest3'),(10004,'yuzhenudidguest4','游客10004',0,5000,0,'','yuzhenudidguest4');
 /*!40000 ALTER TABLE `user_info` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -114,4 +114,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-04-24 16:46:24
+-- Dump completed on 2019-05-09 15:48:00
