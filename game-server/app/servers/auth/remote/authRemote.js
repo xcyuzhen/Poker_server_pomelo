@@ -30,7 +30,7 @@ pro.login = function(udid, sid, cb) {
 			userDao.getUserByUdid(udid, callBack);
 		},
 		function (res, callBack) {
-			if (res.length === 0) {
+			if (res.length == 0) {
 				userDao.createNewUser(udid, callBack);
 			} else {
 				utils.invokeCallback(callBack, null, res[0]);
