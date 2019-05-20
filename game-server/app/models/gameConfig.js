@@ -1,12 +1,12 @@
 var GameConfig = {};
 
-GameConfig.gameType = {
+GameConfig.GameType = {
 	mj: 1,
 };
 
-GameConfig.gameList = [
+GameConfig.GameList = [
 	{
-        id: GameConfig.gameType.mj,
+        id: GameConfig.GameType.mj,
         name: "麻将",
         groupList: [
           {level: 110, base: 100, costGold: 100, costDiamond: 0, limitMin: 1000, limitMax: 10000, name: "初级场"},
@@ -19,12 +19,12 @@ GameConfig.gameList = [
 ];
 
 GameConfig.FriendLevel = {
-	[GameConfig.gameType.mj]: 150,
+	[GameConfig.GameType.mj]: 150,
 };
 
 //场次服务器列表
-GameConfig.groupServerList = {
-    [GameConfig.gameType.mj]: "mj",
+GameConfig.GroupServerList = {
+    [GameConfig.GameType.mj]: "mj",
 };
 
 module.exports = GameConfig;

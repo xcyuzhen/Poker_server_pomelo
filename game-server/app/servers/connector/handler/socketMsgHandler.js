@@ -6,6 +6,7 @@ var mjFriendGroupConfig = require("../../../models/mjFriendGroupConfig");
 var utils = require('../../../util/utils');
 var Code = require('../../../../../shared/code');
 var redisUtil = require("../../../util/redisUtil");
+var async = require('async');
 
 module.exports = function(app) {
 	return new Handler(app);
@@ -80,7 +81,7 @@ var enterGroupLevel = function (msg, session, next) {
 	var mid = session.uid;
 	var level = msg.level.toString();
 	var gameID = parseInt(level.substr(0, 1));
-	var serverType = GameConfig.groupServerList[gameID];
+	var serverType = GameConfig.GroupServerList[gameID];
 
 	//检查当前是否在匹配中或者游戏中
 	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
@@ -113,7 +114,7 @@ var getCreateFriendRoomConfig = function (msg, session, next) {
 	var self = this;
 
 	var gameType = msg.gameType;
-	if (gameType == GameConfig.gameType.mj) {
+	if (gameType == GameConfig.GameType.mj) {
 		next(null, {
 			code: Code.OK,
 			data: mjFriendGroupConfig,
@@ -164,11 +165,109 @@ var createFriendRoom = function (msg, session, next) {
 					return;
 				}
 
-				var serverType = GameConfig.groupServerList[msg.gameType];
+				var serverType = GameConfig.GroupServerList[msg.gameType];
 				msg.level = GameConfig.FriendLevel[msg.gameType];
 
 				//进入游戏服务器
 				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, "", msg, function (err, res) {
+					if (err || (res && res.code !== Code.OK)) {
+						redisUtil.leaveRoom(mid);
+					}
+
+					next(err, res);
+				});
+			}
+		}
+	});
+};
+
+//创建房间
+var enterFriendRoom = function (msg, session, next) {
+	var self = this;
+
+	var mid = session.uid;
+	var roomNum = parseInt(msg.roomNum);
+	//检查当前是否在匹配中或者游戏中
+	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
+		if (err) {
+			next(err);
+		} else {
+			if (resp[0] > 0) {
+				var errMsg;
+				if (resp[0] == 1) {
+					errMsg = "正在匹配队列中，无法加入房间！";
+				} else if (resp[0] == 2) {
+					errMsg = "已经在游戏中，无法加入房间！";
+				}
+
+				next(null, {
+					code: Code.FAIL,
+					msg: errMsg,
+				});
+			} else {
+				//修改redis中玩家状态
+				redisUtil.enterFriendRoom(mid);
+
+				//根据房间号查找服务器
+				var serverName = GameConfig.GroupServerList[GameConfig.GameType.mj];
+				var mjServers = self.app.getServersByType(serverName);
+
+				if(!mjServers || mjServers.length === 0) {
+					next(new Error('can not find mj servers.'));
+					return;
+				}
+
+				var level = GameConfig.FriendLevel[GameConfig.GameType.mj];
+				var serverList = [];
+				for (var i = 0; i < mjServers.length; i++) {
+					var serverID = mjServers[i].id;
+					if (level == utils.getGroupLevelByServerID(serverID)) {
+						serverList.push(serverID);
+					}
+				}
+
+				if (serverList.length <= 0) {
+					next(new Error('can not find mj servers by level: ' + level));
+					return;
+				}
+
+				//排序
+				serverList.sort(function (a, b) {
+					if (a < b) {
+						return -1;
+					} else if (a > b) {
+						return 1;
+					} else {
+						return 0;
+					}
+				});
+
+				//开始查找目标服务器
+				var resultServerID;
+				async.forEachSeries(serverList, function (serverID, callBack) {
+					if (resultServerID) {
+						callBack();
+					} else {
+						self.app.rpc[serverName].roomRemote.exitRoomByRoomNum.toServer(serverID, roomNum, function (err, res) {
+							if (!err) {
+								if (!!res.exit) {
+									resultServerID = serverID;
+								}
+							};
+
+							callBack(err);
+						});
+					}
+				}, function (err) {
+					if (err) {
+						logger.error(err);
+						next(err);
+						return;
+					}
+				});
+
+				//进入游戏服务器
+				self.app.rpc[serverType].roomRemote.socketMsg.toServer(resultServerID, mid, "", msg, function (err, res) {
 					if (err || (res && res.code !== Code.OK)) {
 						redisUtil.leaveRoom(mid);
 					}
@@ -228,6 +327,7 @@ handler.initSocketCmdConfig = function() {
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 		[SocketCmd.GET_CREATE_FRIEND_ROOM_CONFIG]: getCreateFriendRoomConfig,
 		[SocketCmd.CREATE_FRIEND_ROOM]: createFriendRoom,
+		[SocketCmd.ENTER_FRIEND_ROOM]: enterFriendRoom,
 		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 		[SocketCmd.USER_READY]: commonRoomMsg,
 		[SocketCmd.OPE_REQ]: commonRoomMsg,

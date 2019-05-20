@@ -48,8 +48,8 @@ pro.afterStart = function (cb) {
     //根据serverID找到游戏配置
     var serverID = this.app.getServerId();
     var groupLevel = utils.getGroupLevelByServerID(serverID);
-    var groupList = GameConfig.gameList[0].groupList;
-    var isFriendRoomServer = (groupLevel == GameConfig.FriendLevel[GameConfig.gameType.mj]);
+    var groupList = GameConfig.GameList[0].groupList;
+    var isFriendRoomServer = (groupLevel == GameConfig.FriendLevel[GameConfig.GameType.mj]);
     var config;
     for (var i = 0; i < groupList.length; i++) {
         if (groupLevel == groupList[i].level) {

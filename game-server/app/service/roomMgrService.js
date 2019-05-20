@@ -59,6 +59,16 @@ pro.getServerFullStatus = function (msg, cb) {
 	}
 };
 
+//服务器是否满员
+pro.exitRoomByRoomNum = function (roomNum, cb) {
+	roomNum = parseInt(roomNum);
+	if (this.m_roomMap[roomNum]) {
+		utils.invokeCallback(cb, null, {exit: true});
+	}
+
+	utils.invokeCallback(cb, null, {exit: false});
+};
+
 //初始化游戏配置
 pro.initGameConfig = function (gameConfig) {
 	this.m_gameConfig = gameConfig;
@@ -82,12 +92,8 @@ pro.initRooms = function (RoomObj) {
 pro.recycleRoom = function (roomNum) {
 	console.log("HHHHHHHHHHHHHHHHHHHHH 回收房间, roomNum = ", roomNum);
 
-	for (var tmpRoomNum in this.m_roomMap) {
-		var room = this.m_roomMap[tmpRoomNum];
-		if (roomNum == tmpRoomNum) {
-			delete(this.m_roomMap[tmpRoomNum]);
-			break;
-		}
+	if (this.m_roomMap[roomNum]) {
+		delete(this.m_roomMap[roomNum]);
 	}
 
 	for (var i = 0, len = this.m_readyRoomList.length; i < len; i++) {
@@ -214,21 +220,25 @@ pro.enterGroupLevel = function (mid, roomNum, msg, cb) {
 pro.createFriendRoom = function (mid, roomNum, msg, cb) {
 	var self = this;
 
-	console.log("申请房间号");
-
 	self.app.rpc.auth.roomNumRemote.reqOneRoomNum({}, function (err, resp) {
 		if (err) {
 			logger.error(err);
 			utils.invokeCallback(cb, err);
 		} else {
 			console.log("申请到房间号：", resp);
-
 			utils.invokeCallback(cb, null, {code: Code.OK});
-
 			var emptyRoom = self.m_roomList.splice(0, 1)[0];
 
+			//房间参数
+			var param = {
+				roomNum: parseInt(resp),
+				isFriendRoom: true,
+				maNum: msg.maNum,
+				roundNum: msg.roundNum,
+			};
+
 			//初始化空房间
-			emptyRoom.initRoom(parseInt(resp));
+			emptyRoom.initRoom(param);
 
 			//将房间添加进正在等待开局房间列表
 			self.m_readyRoomList.push(emptyRoom);

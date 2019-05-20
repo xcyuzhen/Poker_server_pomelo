@@ -250,6 +250,17 @@ redisUtil.createFriendRoom = function (mid, cb) {
 };
 
 /**
+ * 玩家请求进入好友房间
+ *
+ * @param  {Number}   	mid 		玩家id
+ * @param  {Function} 	cb 			回调
+ * @return {Void}
+ */
+redisUtil.enterFriendRoom = function (mid, cb) {
+	redisUtil.setUserData({mid: mid, state: 1}, false, cb);
+};
+
+/**
  * 玩家请求进入场次
  *
  * @param  {Number}   	mid 		玩家id

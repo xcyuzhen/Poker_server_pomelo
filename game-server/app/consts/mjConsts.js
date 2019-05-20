@@ -22,6 +22,9 @@ Consts.CARD_LIST = [
 //马张数
 Consts.MA_NUM = 6;
 
+//默认的总局数
+Consts.TOTAL_ROUND_NUM = 999;
+
 //游戏状态
 Consts.GAME_STATE = {
 	INIT: 0, 																//初始化

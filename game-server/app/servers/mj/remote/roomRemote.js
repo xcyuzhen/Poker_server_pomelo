@@ -16,6 +16,11 @@ pro.getServerFullStatus = function (msg, cb) {
 	this.roomMgrService.getServerFullStatus(msg, cb);
 };
 
+//检测服务器是否存在传入房间号的房间
+pro.exitRoomByRoomNum = function (roomNum, cb) {
+	this.roomMgrService.exitRoomByRoomNum(roomNum, cb);
+};
+
 pro.socketMsg = function (mid, msg, roomNum, cb) {
 	this.roomMgrService.socketMsg(mid, msg, roomNum, cb);
 };

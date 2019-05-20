@@ -5,6 +5,7 @@ module.exports = {
 	ENTER_GROUP_LEVEL: 20002, 						//加入场次
 	GET_CREATE_FRIEND_ROOM_CONFIG: 20003,			//获取创建房间配置
 	CREATE_FRIEND_ROOM: 20004, 						//创建房间
+	ENTER_FRIEND_ROOM: 20005, 						//进入好友房
 
 	ENTER_ROOM: 20100, 								//进入房间
 	RELOAD_GAME: 20101, 							//断线重连

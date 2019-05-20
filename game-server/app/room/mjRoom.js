@@ -11,9 +11,9 @@ var SocketCmd = require('../models/socketCmd');
 
 var Room = function (app, opts) {
 	this.app = app;
+	opts = opts || {};
 	this.m_channelService = app.get("channelService");
 	this.m_roomMgrService = app.get("roomMgrService");
-	opts = opts || {};
 	this.m_gameConfig = opts.gameConfig;								//房间配置
 	this.m_roomIndex = opts.roomIndex || 0;
 	this.m_roomState = Consts.ROOM.STATE.UN_INITED;						//当前房间状态
@@ -28,10 +28,12 @@ var Room = function (app, opts) {
 var pro = Room.prototype;
 
 //初始化房间
-pro.initRoom = function (roomNum) {
+pro.initRoom = function (param) {
+	param = param || {};
+
 	//生成房间号
 	var level = this.m_gameConfig.level
-	roomNum = roomNum || this.m_roomIndex;
+	roomNum = param.roomNum || this.m_roomIndex;
 
 	//初始化房间数据
 	this.m_level = level;
@@ -39,7 +41,10 @@ pro.initRoom = function (roomNum) {
 	this.m_maxPlayerNum = 4;
 	this.m_curPlayerNum = 0;
 	this.m_realPlayerNum = 0;
-	this.m_isFriendRoom = (level == GameConfig.FriendLevel[GameConfig.gameType.mj]);
+	this.m_isFriendRoom = param.isFriendRoom || (level == GameConfig.FriendLevel[GameConfig.GameType.mj]);
+	this.m_maNum = param.maNum || MjConsts.MA_NUM;
+	this.m_totalRoundNum = param.roundNum || MjConsts.TOTAL_ROUND_NUM;
+	this.m_curRoundNum = 0;
 
 	//初始化牌局数据
 	//服务端自用
@@ -1275,6 +1280,14 @@ pro.exportRoomData = function () {
 	data.level = this.m_level;
 	data.roomNum = this.m_roomNum;
 	data.maxPlayerNum = this.m_maxPlayerNum;
+	data.isFriendRoom = this.m_isFriendRoom;
+	data.maNum = this.m_maNum;
+
+	//开房场特有的字段
+	if (data.isFriendRoom) {
+		data.totalRoundNum = this.m_totalRoundNum;
+		data.curRoundNum = this.m_curRoundNum;
+	}
 
 	return data;
 };
