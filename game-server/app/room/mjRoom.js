@@ -1033,8 +1033,6 @@ pro.dragOneCard = function () {
 pro.roundResult = function (huMid, huCard) {
 	var self = this;
 
-	logger.info("牌局结束");
-
 	self.m_roomState = Consts.ROOM.STATE.ROUND_END;
 	self.m_gameState = MjConsts.GAME_STATE.RESULT;
 
@@ -1043,8 +1041,6 @@ pro.roundResult = function (huMid, huCard) {
 
 	var maList;
 	if (huMid && huMid > 0) {
-		logger.info("有人胡牌");
-
 		//摸马
 		maList = [];
 		var zhongNum = 0;

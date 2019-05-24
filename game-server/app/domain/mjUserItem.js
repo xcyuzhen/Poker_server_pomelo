@@ -316,7 +316,7 @@ pro.aiOutCard = function () {
  * @return {Void}
  */
 pro.addRateItem = function (rateItem) {
-	var baseRate = this.room.roomConfig.base;
+	var baseRate = this.room.m_gameConfig.base;
 	var totalRate = 0;
 
 	//已有该类型倍数项，直接倍数相加
@@ -427,7 +427,7 @@ pro.checkBuGang = function () {
 	for (var i = this.extraCards.length - 1; i >= 0; i--) {
 		var extraItem = this.extraCards[i];
 		if (extraItem.opeType == MjConsts.OPE_TYPE.PENG) {
-			var extraData = extraItem.opeData;
+			var extraData = extraItem.cardValue;
 			for (var j = this.handCards.length - 1; j >= 0; j--) {
 				if (extraData == this.handCards[j]) {
 					resultArr.push(extraData);
