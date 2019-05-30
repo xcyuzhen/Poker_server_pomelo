@@ -14,12 +14,13 @@ module.exports = {
 	OPE_REQ: 20104, 								//玩家操作
 
 	//服务端返回给客户端协议
-	ROOM_INFO: 20200,								//房间信息
-	UPDATE_USER_LIST: 20201, 						//刷新玩家列表
-	ROUND_INFO: 20202,								//回合消息
-	RESULT_INFO: 20203, 							//结算消息
-	WAIT_USER_READY: 20204, 						//等待玩家准备
-	USER_KICK: 20205, 								//玩家被踢出
-	GAME_START: 20206, 								//游戏开始
-	OPE_RSP: 20207, 								//玩家操作返回
+	REC_INFO: 20200, 								//断线重连消息
+	ROOM_INFO: 20201,								//房间信息
+	UPDATE_USER_LIST: 20202, 						//刷新玩家列表
+	ROUND_INFO: 20203,								//回合消息
+	RESULT_INFO: 20204, 							//结算消息
+	WAIT_USER_READY: 20205, 						//等待玩家准备
+	USER_KICK: 20206, 								//玩家被踢出
+	GAME_START: 20207, 								//游戏开始
+	OPE_RSP: 20208, 								//玩家操作返回
 }

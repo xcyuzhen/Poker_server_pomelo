@@ -70,6 +70,11 @@ var login = function(msg, session, next) {
 	});
 };
 
+//拉取断线重连消息
+var reloadGame = function (msg, session, next) {
+
+};
+
 //拉取个人信息
 var requestUserInfo = function (msg, session, next) {
 
@@ -323,6 +328,7 @@ handler.initSocketCmdConfig = function() {
 
 	self.socketCmdConfig = {
 		[SocketCmd.LOGIN]: login,
+		[SocketCmd.RELOAD_GAME]: reloadGame,
 		[SocketCmd.REQUEST_USER_INFO]: requestUserInfo,
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 		[SocketCmd.GET_CREATE_FRIEND_ROOM_CONFIG]: getCreateFriendRoomConfig,
