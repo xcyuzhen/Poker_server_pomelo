@@ -6,9 +6,10 @@ module.exports = {
 	GET_CREATE_FRIEND_ROOM_CONFIG: 20003,			//获取创建房间配置
 	CREATE_FRIEND_ROOM: 20004, 						//创建房间
 	ENTER_FRIEND_ROOM: 20005, 						//进入好友房
+	CHECK_IN_GAME: 20006, 							//检测是否在游戏中
 
-	ENTER_ROOM: 20100, 								//进入房间
-	RELOAD_GAME: 20101, 							//断线重连
+	RELOAD_GAME: 20100, 							//断线重连
+	ENTER_ROOM: 20101, 								//进入房间
 	USER_LEAVE: 20102, 								//玩家离开房间
 	USER_READY: 20103, 								//玩家准备
 	OPE_REQ: 20104, 								//玩家操作
