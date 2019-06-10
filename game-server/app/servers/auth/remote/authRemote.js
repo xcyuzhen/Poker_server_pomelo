@@ -53,6 +53,15 @@ pro.login = function(udid, sid, cb) {
 							utils.invokeCallback(cb, err, data);
 						}
 					});
+
+					redisUtil.getUserDataByField(res.mid, ["gameServerType", "gameServerID", "roomNum"], function (tmpErr, resp) {
+						if (!tmpErr) {
+							if (resp[0] != "" && resp[1] != "" && resp[2] != "") {
+								//玩家在游戏中，远程调用到房间逻辑
+								self.app.rpc[resp[0]].roomRemote.userOnline.toServer(resp[1], res.mid, resp[2], null);
+							}
+						}
+					})
 				}
 			});
 		}
@@ -75,9 +84,7 @@ pro.userOffline = function (mid, sid, cb) {
 
 	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID", "roomNum"], function (err, resp) {
 		if (!err) {
-			utils.printObj(resp);
-
-			if (resp[1] != undefined && resp[1] != "") {
+			if (resp[0] != "" && resp[1] != "" && resp[2] != "") {
 				//玩家在游戏中，远程调用到房间逻辑
 				self.app.rpc[resp[0]].roomRemote.userOffline.toServer(resp[1], mid, resp[2], null);
 			} else {

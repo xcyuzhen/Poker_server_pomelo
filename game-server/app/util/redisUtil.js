@@ -165,7 +165,7 @@ redisUtil.getCommonUserData = function (mid, cb) {
 			utils.invokeCallback(cb, err);
 		} else {
 			var commonData = {}
-			USER_DATA_FIELD_ALL.forEach(function(field) {
+			USER_DATA_FIELD_COMMON.forEach(function(field) {
 			    if (obj[field] != undefined) {
 			    	commonData[field] = obj[field];
 			    }

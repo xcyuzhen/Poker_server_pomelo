@@ -63,8 +63,8 @@ pro.getMoreRobotsFromDB = function (cb) {
 	var curNum = self.robotsList.length;
 	robotDao.getRobots(5, (curNum + 1), function (err, res) {
 		if (!err) {
-			if (res.length === 0) {
-				if (curNum === 0) {
+			if (res.length == 0) {
+				if (curNum == 0) {
 					logger.info("数据库中没有机器人，根据配置将机器人写入数据库");
 
 					//数据库中没有机器人，生成
@@ -84,9 +84,17 @@ pro.getMoreRobotsFromDB = function (cb) {
 				logger.info("读取到机器人数据，写入redis并且记录信息");
 
 				//数据库中有机器人，保存在redis中
+				var writeCount = 0;
 				for (var i = 0; i < res.length; i++) {
 					var robotData = res[i];
-					redisUtil.setUserData(robotData, true)
+					redisUtil.setUserData(robotData, true, function (tErr) {
+						if (!tErr) {
+							writeCount++;
+							if (writeCount >= res.length) {
+								utils.invokeCallback(cb, null, res);
+							}
+						}
+					})
 
 					var robotItem = {
 						id: robotData.id,
@@ -97,8 +105,6 @@ pro.getMoreRobotsFromDB = function (cb) {
 					};
 					self.robotsList.push(robotItem);
 				}
-
-				utils.invokeCallback(cb, null, res);
 			}
 		} else {
 			logger.error("从数据库读取更多机器人失败 startIndex = " + (curNum + 1) + ", err = " + err);
@@ -124,7 +130,7 @@ pro.reqOneRobot = function (param, cb) {
 		for (var i = self.robotsList.length - 1; i >= 0; i--) {
 			var robotItem = self.robotsList[i];
 			var gold = robotItem.gold;
-			if (robotItem.inUse === 0 && gold >= minGold && gold <= maxGold) {
+			if (robotItem.inUse == 0 && gold >= minGold && gold <= maxGold) {
 				robotItem.inUse = 1;
 				resultMid = robotItem.mid;
 				break;
@@ -150,7 +156,7 @@ pro.reqOneRobot = function (param, cb) {
 			logger.info("当前没有适合条件的机器人，去数据库加载更多");
 			self.getMoreRobotsFromDB(function (err, resp) {
 				if (!err) {
-					if (resp.length === 0) {
+					if (resp.length == 0) {
 						logger.info("全部搜索完毕，没有更多机器人");
 						utils.invokeCallback(cb, null, null);
 						endCallBack();
@@ -171,7 +177,7 @@ pro.returnOneRobot = function (mid, cb) {
 
 	for (var i = self.robotsList.length - 1; i >= 0; i--) {
 		var robotItem = self.robotsList[i];
-		if (robotItem.mid === mid) {
+		if (robotItem.mid == mid) {
 			robot = robotItem;
 			break;
 		}

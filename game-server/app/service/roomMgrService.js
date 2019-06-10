@@ -106,11 +106,23 @@ pro.recycleRoom = function (roomNum) {
 	}
 };
 
-//玩家离线
-pro.userOffline = function (mid, cb) {
+//玩家上线
+pro.userOnline = function (mid, roomNum, cb) {
 	var self = this;
 
-	var room = getRoomByMid.call(self, mid);
+	var room = self.m_roomMap[roomNum];
+	if (room) {
+		room.userOnline(mid);
+	}
+
+	utils.invokeCallback(cb, null);
+};
+
+//玩家离线
+pro.userOffline = function (mid, roomNum, cb) {
+	var self = this;
+
+	var room = self.m_roomMap[roomNum];
 	if (room) {
 		room.userOffline(mid);
 	} else {

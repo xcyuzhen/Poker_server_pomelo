@@ -46,7 +46,6 @@ var pro = UserItem.prototype;
 pro.exportClientData = function () {
 	var data = {};
 
-	//玩家座位信息
 	data.mid = this.mid;
 	data.nick = this.nick;
 	data.sex = this.sex;
@@ -56,13 +55,6 @@ pro.exportClientData = function () {
 	data.seatID = this.seatID;
 	data.ready = this.ready;
 	data.online = this.online;
-
-	//玩家牌局数据
-	data.handCards = utils.clone(this.handCards);
-	data.outCards = utils.clone(this.outCards);
-	data.extraCards = utils.clone(this.extraCards);
-	data.handCardsNum = this.handCards.length;
-	data.tingList = utils.clone(this.tingList);
 
 	return data;
 };

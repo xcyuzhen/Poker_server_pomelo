@@ -70,14 +70,18 @@ var login = function(msg, session, next) {
 	});
 };
 
-//拉取断线重连消息
-var reloadGame = function (msg, session, next) {
-
-};
-
 //拉取个人信息
 var requestUserInfo = function (msg, session, next) {
+	var self = this;
+	var mid = session.uid;
 
+	redisUtil.getCommonUserData(mid, function (err, data) {
+		if (err) {
+			next(null, {code: Code.FAIL, msg: "获取玩家信息失败"});
+		} else {
+			next(null, {code: Code.OK, userData: data});
+		}
+	});
 };
 
 //请求加入场次
@@ -284,6 +288,36 @@ var enterFriendRoom = function (msg, session, next) {
 	});
 };
 
+//检测是否在游戏中
+var checkInGame = function (msg, session, next) {
+	var self = this;
+	var mid = session.uid;
+
+	//从redis中拿该用户的游戏服务器，进行消息转发
+	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID", "roomNum"], function (err, resp) {
+		if (err) {
+			logger.error(err);
+			next(null, {code: Code.OK, msg: "获取玩家信息失败"});
+		} else {
+			if (resp[0] != "" && resp[1] != "" && resp[2] != "") {
+				var resultGameID = null;
+				for (var gameID in GameConfig.GroupServerList) {
+					if (resp[0] == GameConfig.GroupServerList[gameID]) {
+						resultGameID = gameID;
+						break;
+					}
+				}
+
+				if (resultGameID != null) {
+					next(null, {code: Code.OK, gameID: resultGameID});
+				}
+			} else {
+				next(null, {code: Code.FAIL, msg: "玩家不在游戏中"});
+			}
+		}
+	});
+};
+
 var commonRoomMsg = function (msg, session, next) {
 	var self = this;
 	var mid = session.uid;
@@ -293,7 +327,8 @@ var commonRoomMsg = function (msg, session, next) {
 	//从redis中拿该用户的游戏服务器，进行消息转发
 	redisUtil.getUserDataByField(mid, ["gameServerType", "gameServerID", "roomNum"], function (err, resp) {
 		if (err) {
-			next(err);
+			logger.error(err);
+			next(null, {code: Code.FAIL, msg: "获取玩家信息出错"});
 		} else {
 			if (resp[0] !== "" && resp[1] !== "") {
 				logger.info("玩家 " + mid + " 所在的游戏服务器类型为 " + resp[0] + ", ID为 " + resp[1]);
@@ -305,8 +340,12 @@ var commonRoomMsg = function (msg, session, next) {
 					next(err, data);
 				});
 			} else {
-				logger.info("没有找到玩家 " + mid + " 所在的游戏服务器类型或者服务器ID，直接返回成功忽略掉该消息");
-				next(null, {code: Code.OK});
+				if (msg.socketCmd == SocketCmd.RELOAD_GAME) {
+					next(null, {code: Code.FAIL, msg: "玩家不在游戏中"});
+				} else {
+					logger.info("没有找到玩家 " + mid + " 所在的游戏服务器类型或者服务器ID，直接返回成功忽略掉该消息");
+					next(null, {code: Code.OK});
+				}
 			}
 		}
 	});
@@ -328,12 +367,13 @@ handler.initSocketCmdConfig = function() {
 
 	self.socketCmdConfig = {
 		[SocketCmd.LOGIN]: login,
-		[SocketCmd.RELOAD_GAME]: reloadGame,
 		[SocketCmd.REQUEST_USER_INFO]: requestUserInfo,
 		[SocketCmd.ENTER_GROUP_LEVEL]: enterGroupLevel,
 		[SocketCmd.GET_CREATE_FRIEND_ROOM_CONFIG]: getCreateFriendRoomConfig,
 		[SocketCmd.CREATE_FRIEND_ROOM]: createFriendRoom,
 		[SocketCmd.ENTER_FRIEND_ROOM]: enterFriendRoom,
+		[SocketCmd.CHECK_IN_GAME]: checkInGame,
+		[SocketCmd.RELOAD_GAME]: commonRoomMsg,
 		[SocketCmd.USER_LEAVE]: commonRoomMsg,
 		[SocketCmd.USER_READY]: commonRoomMsg,
 		[SocketCmd.OPE_REQ]: commonRoomMsg,

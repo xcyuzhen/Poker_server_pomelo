@@ -157,26 +157,13 @@ pro.broadcastRoundInfo = function () {
 
 	//给每个玩家发送回合消息，每个玩家只能看到自己的手牌
 	for (var tMid in self.m_userList) {
-		var gameUserList = {};
-		for (var gMid in self.m_userList) {
-			var tUserItem = self.m_userList[gMid];
-			gameUserList[gMid] = tUserItem.exportClientGameData(tMid);
-		}
+		var roundInfoData = self.getRoundInfoDataByMid(tMid);
+		roundInfoData.socketCmd = SocketCmd.ROUND_INFO;
+		roundInfoData.roomState = self.m_roomState;
 
 		var param = {
 			groupName: MjConsts.MSG_GROUP_NAME,
-			res: {
-				socketCmd: SocketCmd.ROUND_INFO,
-				roomState: self.m_roomState,
-				gameState: self.m_gameState,
-				leftTime: self.m_leftTime,
-				leftCardsNum: self.m_cardList.length - MjConsts.MA_NUM,
-				curOpeMid: self.m_curOpeMid,
-				curOpeList: utils.clone(self.m_curOpeList),
-				lastOpeMid: self.m_lastOpeMid,
-				lastOpeItem: utils.clone(self.m_lastOpeItem),
-				userList: gameUserList,
-			},
+			res: roundInfoData,
 		};
 
 		self.pushMessageByUids([tMid], param);
@@ -194,30 +181,41 @@ pro.pushRoundInfoByMids = function (midList) {
 
 	for (var i = 0; i < midList.length; i++) {
 		var mid = midList[i];
-		var gameUserList = {};
-		for (var gMid in self.m_userList) {
-			var tUserItem = self.m_userList[gMid];
-			gameUserList[gMid] = tUserItem.exportClientGameData(mid);
-		}
+		var roundInfoData = self.getRoundInfoDataByMid(mid);
+		roundInfoData.socketCmd = SocketCmd.ROUND_INFO;
+		roundInfoData.roomState = self.m_roomState;
 
 		var param = {
 			groupName: MjConsts.MSG_GROUP_NAME,
-			res: {
-				socketCmd: SocketCmd.ROUND_INFO,
-				roomState: self.m_roomState,
-				gameState: self.m_gameState,
-				leftTime: self.m_leftTime,
-				leftCardsNum: self.m_cardList.length - MjConsts.MA_NUM,
-				curOpeMid: self.m_curOpeMid,
-				curOpeList: utils.clone(self.m_curOpeList),
-				lastOpeMid: self.m_lastOpeMid,
-				lastOpeItem: utils.clone(self.m_lastOpeItem),
-				userList: gameUserList,
-			},
+			res: roundInfoData,
 		};
 
 		self.pushMessageByUids([mid], param);
 	}
+};
+
+//根据mid获取对应的roundInfo数据
+pro.getRoundInfoDataByMid = function (mid) {
+	var self = this;
+
+	var gameUserList = {};
+	for (var gMid in self.m_userList) {
+		var tUserItem = self.m_userList[gMid];
+		gameUserList[gMid] = tUserItem.exportClientGameData(mid);
+	}
+
+	var roundInfoData = {
+		gameState: self.m_gameState,
+		leftTime: self.m_leftTime,
+		leftCardsNum: self.m_cardList.length - MjConsts.MA_NUM,
+		curOpeMid: self.m_curOpeMid,
+		curOpeList: utils.clone(self.m_curOpeList),
+		lastOpeMid: self.m_lastOpeMid,
+		lastOpeItem: utils.clone(self.m_lastOpeItem),
+		userList: gameUserList,
+	};
+
+	return roundInfoData;
 };
 
 /////////////////////////////////////对外接口begin/////////////////////////////////////
@@ -428,16 +426,16 @@ pro.userOnline = function (mid) {
 pro.userOffline = function (mid) {
 	var self = this;
 
-	// if (self.m_roomState == Consts.ROOM.STATE.PLAYING) {
-	// 	//玩家在游戏中，修改该玩家的在线状态
-	// 	var userItem = self.m_userList[mid];
-	// 	userItem.online = 0;
+	if (self.m_roomState == Consts.ROOM.STATE.PLAYING) {
+		//玩家在游戏中，修改该玩家的在线状态
+		var userItem = self.m_userList[mid];
+		userItem.online = 0;
 
-	// 	//广播该玩家掉线的消息
-	// 	self.updateUserSeatList();
-	// } else {
+		//广播该玩家掉线的消息
+		self.updateUserSeatList();
+	} else {
 		self.leaveRoom(mid);
-	// }
+	}
 };
 
 //房间是否已经初始化
@@ -476,6 +474,31 @@ pro.getRealUserNum = function () {
 /////////////////////////////////////对外接口end/////////////////////////////////////
 
 /////////////////////////////////////客户端请求处理begin/////////////////////////////////////
+//断线重连
+pro.reloadGame = function (mid, msg, cb) {
+	var self = this;
+
+	var clientUserList = {};
+	for (var tMid in self.m_userList) {
+		var tUserItem = self.m_userList[tMid];
+		clientUserList[tMid] = tUserItem.exportClientData();
+	}
+
+	var param = {
+		groupName: MjConsts.MSG_GROUP_NAME,
+		res: {
+			socketCmd: SocketCmd.RELOAD_GAME,
+			roomState: self.m_roomState,
+			roomData: self.exportRoomData(),
+			roundInfo: self.getRoundInfoDataByMid(mid),
+			userList: clientUserList,
+		},
+	};
+
+	self.pushMessageByUids([mid], param);
+	utils.invokeCallback(cb, null, {code: Code.OK});
+};
+
 //玩家准备
 pro.userReady = function (mid, msg, cb) {
 	var self = this;
@@ -1384,6 +1407,7 @@ pro.clearRoom = function () {
 /////////////////////////////////////功能函数end/////////////////////////////////////
 
 var socketCmdConfig = {
+	[SocketCmd.RELOAD_GAME]: "reloadGame",
 	[SocketCmd.USER_READY]: "userReady",
 	[SocketCmd.OPE_REQ]: "userOpeRequest",
 };

@@ -21,8 +21,13 @@ pro.exitRoomByRoomNum = function (roomNum, cb) {
 	this.roomMgrService.exitRoomByRoomNum(roomNum, cb);
 };
 
-pro.socketMsg = function (mid, msg, roomNum, cb) {
-	this.roomMgrService.socketMsg(mid, msg, roomNum, cb);
+pro.socketMsg = function (mid, roomNum, msg, cb) {
+	this.roomMgrService.socketMsg(mid, roomNum, msg, cb);
+};
+
+//玩家上线
+pro.userOnline = function (mid, roomNum, cb) {
+	this.roomMgrService.userOnline(mid, roomNum, cb);
 };
 
 //玩家离线
