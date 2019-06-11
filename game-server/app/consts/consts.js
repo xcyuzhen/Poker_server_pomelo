@@ -1,8 +1,12 @@
 var Consts = {};
+Consts.COST_TYPE = {
+	CT_GOLD: 1,
+	CT_DIA: 2,
+};
 
 Consts.ROOM_SERVICE = {
 	ROOM_NUM: 100,
-},
+};
 
 Consts.ROOM = {
 	STATE: {
@@ -12,6 +16,6 @@ Consts.ROOM = {
 		PLAYING: 3, 						//开局中
 		ROUND_END: 4, 						//第一局结束，第二局还没开始
 	},
-},
+};
 
 module.exports = Consts;

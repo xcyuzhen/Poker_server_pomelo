@@ -2,6 +2,7 @@ var logger = require('pomelo-logger').getLogger(__filename);
 var RoomMgrService = require('../service/roomMgrService');
 var MjRoom = require('../room/mjRoom');
 var GameConfig = require('../models/gameConfig');
+var friendGroupConfig = require('../models/mjFriendGroupConfig');
 var utils = require('../util/utils');
 
 module.exports = function(app, opts) {
@@ -64,6 +65,7 @@ pro.afterStart = function (cb) {
     }
 
     this.service.initGameConfig(config);
+    this.service.initFriendGroupConfig(friendGroupConfig);
     this.service.setIsFriendRoomServer(isFriendRoomServer);
     this.service.initRooms( MjRoom);
     process.nextTick(cb);

@@ -162,6 +162,7 @@ redisUtil.getAllUserData = function (mid, cb) {
 redisUtil.getCommonUserData = function (mid, cb) {
 	redisUtil.getAllUserData(mid, function (err, obj) {
 		if (err) {
+			logger.error(err);
 			utils.invokeCallback(cb, err);
 		} else {
 			var commonData = {}

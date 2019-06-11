@@ -22,6 +22,7 @@ var RoomMgrService = function(app, opts) {
     this.m_readyRoomList = [];					//等待开局的房间
     this.m_roomMap = {}; 						//有房间号的roomMap
     this.m_gameConfig = null;
+    this.m_friendGroupConfig = null;
     this.m_isFriendRoomServer = false; 			//是否是好友房服务器
 };
 
@@ -72,6 +73,11 @@ pro.exitRoomByRoomNum = function (roomNum, cb) {
 //初始化游戏配置
 pro.initGameConfig = function (gameConfig) {
 	this.m_gameConfig = gameConfig;
+};
+
+//初始化好友房配置
+pro.initFriendGroupConfig = function (config) {
+	this.m_friendGroupConfig = config;
 };
 
 //设置是否是好友房服务器
@@ -232,35 +238,70 @@ pro.enterGroupLevel = function (mid, roomNum, msg, cb) {
 pro.createFriendRoom = function (mid, roomNum, msg, cb) {
 	var self = this;
 
-	self.app.rpc.auth.roomNumRemote.reqOneRoomNum({}, function (err, resp) {
-		if (err) {
-			logger.error(err);
-			utils.invokeCallback(cb, err);
-		} else {
-			console.log("申请到房间号：", resp);
-			utils.invokeCallback(cb, null, {code: Code.OK});
-			var emptyRoom = self.m_roomList.splice(0, 1)[0];
+	if (self.m_roomList.length <= 0) {
+		utils.invokeCallback(cb, null, {code: Code.FAIL, msg: "房间都已经用完，请稍后再试"});
+		return;
+	}
 
-			//房间参数
-			var param = {
-				roomNum: parseInt(resp),
-				isFriendRoom: true,
-				maNum: msg.maNum,
-				roundNum: msg.roundNum,
-			};
+	var roundNum = msg.roundNum;
+	var maNum = msg.maNum;
+	var costType = self.m_friendGroupConfig.costType;
+	var costConfig = self.m_friendGroupConfig.costNumConfig;
+	redisUtil.getCommonUserData(mid, function (err, data) {
+		if (!err) {
+			var moneyNum, msg;
+			if (costType == Consts.COST_TYPE.CT_GOLD) {
+				moneyNum = parseInt(data.gold);
+				msg = "金币不足，无法开房间！";
+			} else if (costType == Consts.COST_TYPE.CT_GOLD) {
+				moneyNum = parseInt(data.diamond);
+				msg = "钻石不足，无法开房间！";
+			}
 
-			//初始化空房间
-			emptyRoom.initRoom(param);
+			for (var i = 0; i < costConfig.length; i++) {
+				var config = costConfig[i];
+				if (config.roundNum == roundNum) {
+					if (config.cost > moneyNum) {
+						utils.invokeCallback(cb, null, {code: Code.FAIL, msg: msg});
+						return;
+					} else {
+						self.app.rpc.auth.roomNumRemote.reqOneRoomNum({}, function (err, resp) {
+							if (err) {
+								logger.error(err);
+								utils.invokeCallback(cb, err);
+							} else {
+								console.log("申请到房间号：", resp);
+								utils.invokeCallback(cb, null, {code: Code.OK});
+								var emptyRoom = self.m_roomList.splice(0, 1)[0];
 
-			//将房间添加进正在等待开局房间列表
-			self.m_readyRoomList.push(emptyRoom);
+								//房间参数
+								var param = {
+									roomNum: parseInt(resp),
+									isFriendRoom: true,
+									maNum: maNum,
+									roundNum: roundNum,
+									costNum: config.cost,
+								};
 
-			//将房间添加进roomMap
-			roomNum = emptyRoom.getRoomNumber();
-			self.m_roomMap[roomNum] = emptyRoom;
+								//初始化空房间
+								emptyRoom.initRoom(param);
 
-			//玩家进入房间
-			emptyRoom.enterRoom(mid);
+								//将房间添加进正在等待开局房间列表
+								self.m_readyRoomList.push(emptyRoom);
+
+								//将房间添加进roomMap
+								roomNum = emptyRoom.getRoomNumber();
+								self.m_roomMap[roomNum] = emptyRoom;
+
+								//玩家进入房间
+								emptyRoom.enterRoom(mid);
+							}
+						});
+					}
+
+					break;
+				}
+			}
 		}
 	});
 };

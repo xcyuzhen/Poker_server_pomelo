@@ -232,14 +232,11 @@ pro.enterRoom = function (mid, isRobot) {
 		if (err) {
 			logger.error("mjRoom.enterRoom error");
 		} else {
-			console.log("修改玩家state等数据");
-
 			//获取玩家信息，添加到用户列表
 			redisUtil.getAllUserData(mid, function (err, userDataAll) {
 				if (err) {
 					logger.error("mjRoom.enterRoom 获取用户数据失败，mid = ", mid);
 				} else {
-					console.log("获取玩家所有数据");
 					var userItem = new UserItem(self, userDataAll);
 
 					//初始化玩家的位置
@@ -249,8 +246,6 @@ pro.enterRoom = function (mid, isRobot) {
 					if (isRobot) {
 						userItem.robot = 1;
 					}
-
-					console.log("玩家座位号： ", userItem.seatID);
 
 					//将玩家添加进玩家列表
 					self.m_userList[mid] = userItem;
@@ -318,10 +313,10 @@ pro.enterRoom = function (mid, isRobot) {
 
 					//判断房间是否已满
 					var isFull = self.isRoomFull();
-					if (isFull) {
-						// self.waitToStart();
-					} else {
-						self.startReqRobotTimer();
+					if (!isFull) {
+						if (!self.m_isFriendRoom) {
+							self.startReqRobotTimer();
+						}
 					}
 				}
 			});
@@ -484,13 +479,22 @@ pro.reloadGame = function (mid, msg, cb) {
 		clientUserList[tMid] = tUserItem.exportClientData();
 	}
 
+	//有吃碰杠等操作，并且操作人和当前出牌人不是同一人，并且操作人不是请求断线重连的人，清空操作列表和操作人
+	//该逻辑修复的bug：断线重连人是A，B打了一张牌，D可以碰，这时候A看到箭头是不指向任何人的，但是断线重连后可以看到指向D
+	var roundInfoData = self.getRoundInfoDataByMid(mid);
+	var curOutCardMid = self.m_seatMidMap[self.m_curTurnSeatID];
+	if (roundInfoData.curOpeList.length > 0 && roundInfoData.curOpeMid != curOutCardMid && roundInfoData.curOpeMid != mid) {
+		roundInfoData.curOpeMid = 0;
+		roundInfoData.curOpeList = [];
+	}
+
 	var param = {
 		groupName: MjConsts.MSG_GROUP_NAME,
 		res: {
 			socketCmd: SocketCmd.RELOAD_GAME,
 			roomState: self.m_roomState,
 			roomData: self.exportRoomData(),
-			roundInfo: self.getRoundInfoDataByMid(mid),
+			roundInfo: roundInfoData,
 			userList: clientUserList,
 		},
 	};
@@ -896,49 +900,6 @@ pro.userOpeRequest = function (mid, msg, cb) {
 /////////////////////////////////////客户端请求处理end/////////////////////////////////////
 
 /////////////////////////////////////牌局流程begin/////////////////////////////////////
-//等待开局
-pro.waitToStart = function () {
-	var self = this;
-	logger.info("全部玩家到齐，开始进入准备流程");
-	self.m_roomState = Consts.ROOM.STATE.WAIT_TO_START;
-	self.m_leftTime = MjConsts.TIME_CONF.ReadyLeftTime;
-
-	//广播
-	var param = {
-		groupName: MjConsts.MSG_GROUP_NAME,
-		res: {
-			socketCmd: SocketCmd.WAIT_USER_READY,
-			roomState: self.m_roomState,
-			leftTime: self.m_leftTime - 2000,
-		},
-	};
-	self.broadCastMsg(param);
-
-	//开启定时器
-	self.startGameTimer(function () {
-		var hasUserUnready = false;
-
-		//踢出没有准备的玩家
-		for (var tMid in self.m_userList) {
-			var userItem = self.m_userList[tMid];
-			if (userItem.ready == 0) {
-				hasUserUnready = true;
-				self.leaveRoom(tMid);
-
-				//通知被踢出玩家
-				var param = {
-					groupName: MjConsts.MSG_GROUP_NAME,
-					res: {
-						socketCmd: SocketCmd.USER_KICK,
-						msg: "准备超时，您已经被踢出房间！",
-					},
-				};
-				self.pushMessageByUids([tMid], param);
-			}
-		}
-	});
-};
-
 //游戏开始
 pro.gameStart = function () {
 	var self = this;

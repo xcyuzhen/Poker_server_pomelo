@@ -146,7 +146,8 @@ var createFriendRoom = function (msg, session, next) {
 	//检查当前是否在匹配中或者游戏中
 	redisUtil.getUserDataByField(mid, ["state"], function (err, resp) {
 		if (err) {
-			next(err);
+			logger.error(err);
+			return;
 		} else {
 			if (resp[0] > 0) {
 				var errMsg;
@@ -156,20 +157,14 @@ var createFriendRoom = function (msg, session, next) {
 					errMsg = "已经在游戏中，无法创建房间！";
 				}
 
-				next(null, {
-					code: Code.FAIL,
-					msg: errMsg,
-				});
+				next(null, {code: Code.FAIL, msg: errMsg});
 			} else {
 				//修改redis中玩家状态
 				redisUtil.createFriendRoom(mid);
 
 				if (msg.gameType == undefined) {
 					var errMsg = "gameType错误: " + msg.gameType;
-					next(null, {
-						code: Code.FAIL,
-						msg: errMsg,
-					});
+					next(null, {code: Code.FAIL, msg: errMsg});
 
 					return;
 				}
@@ -179,7 +174,7 @@ var createFriendRoom = function (msg, session, next) {
 
 				//进入游戏服务器
 				self.app.rpc[serverType].roomRemote.socketMsg(session, mid, "", msg, function (err, res) {
-					if (err || (res && res.code !== Code.OK)) {
+					if (err || (res && res.code != Code.OK)) {
 						redisUtil.leaveRoom(mid);
 					}
 

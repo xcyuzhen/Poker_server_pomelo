@@ -1,5 +1,5 @@
 var friendGroupConfig = {
-	costType: 2, 										//扣除种类(1: 金币 2: 钻石)
+	costType: 1, 										//扣除种类(1: 金币 2: 钻石)
 	costNumConfig: [ 									//扣除数量配置
 		{roundNum: 1, cost: 1},
 		{roundNum: 2, cost: 2},
